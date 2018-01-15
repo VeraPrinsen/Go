@@ -1,15 +1,14 @@
 package server;
 
-import generalUI.*;
 import java.io.*;
 import java.net.*;
 
 public class Server extends Thread {
 	
 	private int port;
-	private MessageUI msgUI;
+	private TUI msgUI;
 	
-	public Server(int port, MessageUI msgUI) {
+	public Server(int port, TUI msgUI) {
 		this.msgUI = msgUI;
 		this.port = port;
 	}
@@ -23,7 +22,7 @@ public class Server extends Thread {
 
 			while (true) {
 				sock = ssock.accept();
-				ClientHandler ch = new ClientHandler(ssock, sock);
+				// ClientHandler ch = new ClientHandler(ssock, sock);
 			}
 		} catch (IOException e) {
 			// server or client could not be created.
