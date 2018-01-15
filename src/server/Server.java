@@ -41,5 +41,9 @@ public class Server extends Thread {
 		msgUI.print(message);
 	}
 	
+	public void broadcast(String message) {
+		// tell all clients a message
+	}
+	
 
 }
