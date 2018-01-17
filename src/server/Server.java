@@ -2,47 +2,73 @@ package server;
 
 import java.io.*;
 import java.net.*;
+import java.util.*;
 
 public class Server extends Thread {
 	
-	private int port;
-	private TUI msgUI;
+	ServerTUI tui;
 	
-	public Server(int port, TUI msgUI) {
-		this.msgUI = msgUI;
-		this.port = port;
+	Set<ClientHandler> chSet; 
+	Set<ClientHandler> lobby;
+	
+	int port;
+	ServerSocket ssock;
+	Socket sock;
+	
+	public Server(ServerTUI tui) {
+		this.tui = tui;
+		chSet = new HashSet<>();
+		lobby = new HashSet<>();
+		port = 0;
+		ssock = null;
+		sock = null;
 	}
 	
 	public void run() {
-		ServerSocket ssock = null;
-		Socket sock = null;
-
-		try {
-			ssock = new ServerSocket(port);
-
-			while (true) {
-				sock = ssock.accept();
-				// ClientHandler ch = new ClientHandler(ssock, sock);
-			}
-		} catch (IOException e) {
-			// server or client could not be created.
-		} finally {
+		// Start up the server =============================================
+		boolean portOK = false;
+		while (!portOK) {
+			String tryport = tui.readString("Give the port number you want to use");
 			try {
-				ssock.close();
-				sock.close();
+				port = Integer.parseInt(tryport);
+				ssock = new ServerSocket(port);
+				tui.print("Server is now listening on port: " + port);
+				portOK = true;
+			} catch (NumberFormatException e) {
+				tui.print("ERROR: port " + tryport + " is not an integer.");
 			} catch (IOException e) {
-				// server or client could not be closed.
+				if (e instanceof BindException) {
+					tui.print("ERROR: port " + port + " is already in use.");
+				} else {
+					e.printStackTrace();
+				}
+			} catch (IllegalArgumentException e) {
+				tui.print("ERROR: port " + port + " cannot be used.");
 			}
 		}
-	}
+		
+		// Wait for clients to connect ========================================
+		boolean running = true;
+		while (running) {
+			try {
+				sock = ssock.accept();
+				ClientHandler ch = new ClientHandler(ssock, sock);
+				chSet.add(ch);
+				lobby.add(ch);
+				ch.start();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
-	public void print(String message) {
-		msgUI.print(message);
+		try {
+			ssock.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		tui.print("Server is closed.");
+		
 	}
-	
-	public void broadcast(String message) {
-		// tell all clients a message
-	}
-	
 
 }

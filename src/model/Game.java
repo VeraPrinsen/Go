@@ -17,7 +17,7 @@ public class Game {
 	}
 	
 	public void setBoard(int DIM) {
-		board = new Board(DIM);
+		// board = new Board(DIM);
 	}
 	
 	public Board getBoard() {

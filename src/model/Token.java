@@ -1,20 +1,16 @@
 package model;
 
-public class Token {
+public enum Token {
+
+	EMPTY, BLACK, WHITE;
 	
-	private int i;
-	private int color; // empty = 0; white = 1; black = 2;
-	
-	public Token(int i) {
-		this.i = i;
-		this.color = 0;
-	}
-	
-	public int getToken() {
-		return this.color;
-	}
-	
-	public void setToken(int color) {
-		this.color = color;
+	public Token other() {
+		if (this.equals(Token.BLACK)) {
+			return Token.WHITE;
+		} else if (this.equals(Token.WHITE)) {
+			return Token.BLACK;
+		} else {
+			return Token.EMPTY;
+		}
 	}
 }

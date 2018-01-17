@@ -3,7 +3,7 @@ package server;
 import java.io.*;
 import java.net.*;
 
-public class ClientHandler {
+public class ClientHandler extends Thread {
 
 	private Socket clientSock;
 	private ServerSocket serverSock;
@@ -18,5 +18,9 @@ public class ClientHandler {
 		out = new BufferedWriter(new OutputStreamWriter(clientSock.getOutputStream()));
 	}
 	
-	// 
+	public void run() {
+		
+	}
+	
+	
 }
