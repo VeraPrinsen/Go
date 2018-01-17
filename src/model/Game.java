@@ -1,6 +1,8 @@
 package model;
 
-public class Game {
+import server.*;
+
+public class Game extends Thread {
 
 	private final int numberOfPlayers;
 	private Board board;
@@ -12,12 +14,16 @@ public class Game {
 		players = new Player[this.numberOfPlayers];
 	}
 	
-	public void start() {
+	public void run() {
 		
 	}
 	
 	public void setBoard(int DIM) {
-		// board = new Board(DIM);
+		board = new Board(DIM);
+	}
+	
+	public void setFirstPlayerColor(boolean white) {
+		
 	}
 	
 	public Board getBoard() {

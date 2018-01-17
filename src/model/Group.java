@@ -31,23 +31,13 @@ public class Group {
 		return this.perimeterFields;
 	}
 	
-	
 	public void updatePerimeter() {
 		// for each field in the group, look at all the adjacent location, if they are not the token of the group and not already in the perimeter, add it.
-		Iterator<Field> iterF = this.groupFields.iterator();
-		
-		// For each field in the group
-		while (iterF.hasNext()) {
-			Field tempF = iterF.next();
-			Set<Field> neighbors = tempF.getNeighbors();
-			Iterator<Field> iterN = neighbors.iterator();
-			
-			// look at all the adjacent locations
-			while (iterN.hasNext()) {
-				Field tempN = iterN.next();
-				// if they are not the token of the group && not already in the perimeter, add it
-				if (!tempN.getToken().equals(this.t) && !perimeterFields.contains(tempN)) {
-					perimeterFields.add(tempN);
+		for (Field f : groupFields) {
+			Set<Field> neighbors = f.getNeighbors();
+			for (Field n : neighbors) {
+				if (!n.getToken().equals(this.t) && !perimeterFields.contains(n)) {
+					perimeterFields.add(n);
 				}
 			}
 		}

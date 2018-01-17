@@ -1,19 +1,21 @@
 package server;
 
+import model.*;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
 public class Server extends Thread {
 	
-	ServerTUI tui;
+	private ServerTUI tui;
 	
-	Set<ClientHandler> chSet; 
-	Set<ClientHandler> lobby;
+	private Set<Player> chSet; 
+	private Set<Player> lobby;
 	
-	int port;
-	ServerSocket ssock;
-	Socket sock;
+	private int port;
+	private ServerSocket ssock;
+	private Socket sock;
 	
 	public Server(ServerTUI tui) {
 		this.tui = tui;
@@ -52,7 +54,7 @@ public class Server extends Thread {
 		while (running) {
 			try {
 				sock = ssock.accept();
-				ClientHandler ch = new ClientHandler(ssock, sock);
+				Player ch = new Player(this, sock);
 				chSet.add(ch);
 				lobby.add(ch);
 				ch.start();
@@ -69,6 +71,37 @@ public class Server extends Thread {
 		
 		tui.print("Server is closed.");
 		
+	}
+	
+	public void startGame(int numberPlayers, Player player1) {
+		Game newgame = new Game(numberPlayers);
+		newgame.addPlayer(player1);
+		lobby.remove(player1);
+		
+		// Ask for board size and which color he wants to play with.
+		player1.send();
+		int boardsize = 9;
+		boolean color = true;
+		
+		Player player2 = null;		
+		boolean player2Found = false;
+		
+		while (!player2Found) {
+			if (!lobby.isEmpty()) {
+				for (Player p : lobby) {
+					p.send(); // Send request an wait for an acceptance
+					
+					player2 = p;
+					player2Found = true;
+				}
+			}
+		}
+		
+		newgame.addPlayer(player2);
+		lobby.remove(player2);
+		newgame.setBoard(boardsize);
+		
+		newgame.start();	
 	}
 
 }
