@@ -1,6 +1,6 @@
 package model;
 
-import server.*;
+import serverclientconnection.*;
 
 public class Game extends Thread {
 
