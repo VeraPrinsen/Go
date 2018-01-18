@@ -1,6 +1,8 @@
-package model;
+package tests;
 
 import boardGUI.*;
+import model.Board;
+import model.Token;
 
 public class TestBoard {
 
