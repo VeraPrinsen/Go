@@ -3,6 +3,11 @@ package serverclientconnection;
 import java.io.BufferedReader;
 import java.io.IOException;
 
+/**
+ * The ServerInputHandler handles all the input that the client gets from the server.
+ * @author vera.prinsen
+ *
+ */
 public class ServerInputHandler implements Runnable {
 	
 	private ServerHandler sh;
@@ -13,7 +18,10 @@ public class ServerInputHandler implements Runnable {
 		this.in = in;
 	}
 	
-	// THIS CHECKS FOR THE INPUT FROM THE SERVER TO THE CLIENT
+	/**
+	 * This checks the input stream from the server to this particular client constantly.
+	 */
+	// TO DO: EXCEPTION HANDLING
 	public void run() {
 		String msg;
 		try {

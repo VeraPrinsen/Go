@@ -14,7 +14,10 @@ public class ServerTUI implements Runnable {
 		in = new BufferedReader(new InputStreamReader(System.in));
 	}
 	
-	// THIS CHECKS THE INPUT CONSOLE OF THE SERVER CONSTANTLY
+	/**
+	 * This method checks the input console of the server constantly.
+	*/
+	// TO DO: EXCEPTION HANDLING
 	public void run() {
 		String msg;
 		try {
@@ -25,16 +28,22 @@ public class ServerTUI implements Runnable {
 			e.printStackTrace();
 		}
 	}
-		
-	// THIS IS THE OUTPUT CONSOLE OF THE SERVER
+	
+	/**
+	 * This method prints output on the console of the server.
+	 */
 	public void print(String msg) {
 		System.out.println(msg);
 	}
 	
-	// RANDOM GETTERS THAT OTHER CLASSES USE TO GET SPECIFIC INFORMATION FROM THE CONSOLE
+	/**
+	 * Before the TUI is started, this is called to get the port that the server must listen on.
+	 */
+	// TO DO: NOW IT IS DEFAULT, MAKE IT CONFIGURABLE (JUST REMOVE THE COMMANDS AND REMOVE return 4567;)
 	public int getPort() throws Exception {
-		print("Enter the port you want to use: ");
-		return Integer.parseInt(in.readLine());
+		//print("Enter the port you want to use: ");
+		//return Integer.parseInt(in.readLine());
+		return 4567;
 	}
 
 }

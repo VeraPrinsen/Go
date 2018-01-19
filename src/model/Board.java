@@ -65,6 +65,10 @@ public class Board {
 		return newboard;
 	}
 
+	public int getDIM() {
+		return this.DIM;
+	}
+	
 	private int index(int x, int y) {
 		// afhankelijk van protocol (x, y welke is rij, welke kolom. Beginnen we bij 0
 		// of 1).
