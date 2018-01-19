@@ -8,13 +8,17 @@ public class Board {
 	private Field[] board;
 	private final int DIM;
 	private GOGUI gui;
+	private boolean useGUI;
 	private int passes;
 	private List<Group> groups;
 
-	public Board(int DIM) {
+	public Board(int DIM, boolean useGUI) {
 		this.DIM = DIM;
 		this.board = new Field[DIM * DIM];
-		this.gui = new GoGUIIntegrator(true, true, DIM);
+		this.useGUI = useGUI;
+		if (useGUI) {
+			this.gui = new GoGUIIntegrator(false, false, DIM);
+		}
 		this.groups = new ArrayList<>();
 
 		try {
@@ -53,12 +57,15 @@ public class Board {
 		// Set the amount of consecutive passes to zero
 		passes = 0;
 		update();
-		gui.startGUI();
-        gui.setBoardSize(DIM);
+		
+		if (useGUI) {
+			gui.startGUI();
+	        gui.setBoardSize(DIM);
+		}
 	}
 
 	public Board deepCopy() {
-		Board newboard = new Board(DIM);
+		Board newboard = new Board(DIM, false);
 		for (int i = 0; i < DIM * DIM; i++) {
 			newboard.setField(i, this.getField(i));
 		}
@@ -83,15 +90,22 @@ public class Board {
 		update();
 	}
 
-	public void setField(int x, int y, Token t) throws InvalidCoordinateException {
-		if (t.equals(Token.BLACK)) {
-			gui.addStone(y, x, false);
-		} else if (t.equals(Token.WHITE)) {
-			gui.addStone(y, x, true);
-		} else {
-			// Cannot set an empty stone
+	public void setField(int x, int y, Token t) {
+		try {
+			if (useGUI) {
+				if (t.equals(Token.BLACK)) {
+					gui.addStone(y, x, false);
+				} else if (t.equals(Token.WHITE)) {
+					gui.addStone(y, x, true);
+				} else {
+					// Cannot set an empty stone
+				}
+			}
+			setField(index(x, y), t);
+		} catch (InvalidCoordinateException e) {
+			e.printStackTrace();
 		}
-		setField(index(x, y), t);
+		
 	}
 
 	public void pass(Token t) {
@@ -239,10 +253,12 @@ public class Board {
 		// group.
 		for (Field f : g.getGroup()) {
 			f.setToken(Token.EMPTY);
-			try {
-				gui.removeStone(f.getY(), f.getX());
-			} catch (InvalidCoordinateException e) {
-				e.printStackTrace();
+			if (useGUI) {
+				try {
+					gui.removeStone(f.getY(), f.getX());
+				} catch (InvalidCoordinateException e) {
+					e.printStackTrace();
+				}
 			}
 		}		
 	}

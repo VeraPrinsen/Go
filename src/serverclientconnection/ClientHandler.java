@@ -25,6 +25,7 @@ public class ClientHandler {
 	private int[] clientExtensions;
 
 	private Game game = null;
+	private String opponent;
 	private int playerNo = -1;
 
 	public ClientHandler(Server server, BufferedReader in, BufferedWriter out) {
@@ -47,7 +48,7 @@ public class ClientHandler {
 	public void run() {
 		clientInput = new ClientInputHandler(this, in);
 
-		Thread inputThread = new Thread(clientInput);
+		Thread inputThread = new Thread(clientInput, "ClientInput");
 		inputThread.start();
 
 		sendVersion();
@@ -88,6 +89,7 @@ public class ClientHandler {
 			print("NAME command ontvangen");
 			
 			clientName = args[1];
+			clientVersionNo = Integer.parseInt(args[3]);
 			clientExtensions[0] = Integer.parseInt(args[5]);
 			clientExtensions[1] = Integer.parseInt(args[6]);
 			clientExtensions[2] = Integer.parseInt(args[7]);
@@ -101,34 +103,37 @@ public class ClientHandler {
 
 		case Protocol.Client.REQUESTGAME:
 			print("REQUESTGAME command ontvangen van " + clientName);
-			
-			// server.getGameServer().addToLobby(this);
+			server.getGameServer().addToLobby(this);
 			break;
 
 		case Protocol.Client.SETTINGS:
 			print("SETTINGS command ontvangen van " + clientName);
 			
-//			String colorString = args[1];
-//			int boardSize = Integer.parseInt(args[2]);
-//
-//			game.setBoard(boardSize);
-//			game.setColors(this, colorString);
-//			game.sendStart();
+			String colorString = args[1];
+			int boardSize = Integer.parseInt(args[2]);
+
+			game.setBoard(boardSize, false);
+			game.setColors(this, colorString);
+			game.sendStart();
 			break;
 
 		case Protocol.Client.MOVE:
 			print("MOVE command ontvangen van " + clientName);
 			
-//			if (game != null) {
-//				if (args[1].equals(Protocol.Client.PASS)) {
-//					// pass
-//				} else {
-//					String[] coordinates = args[1].split(Character.toString(Protocol.General.DELIMITER2));
-//					game.makeMove(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]), playerNo);
-//				}	
-//			} else {
-//				sendError(Protocol.Server.INVALID, "A game has not yet started.");
-//			}
+			if (game != null) {
+				if (args[1].equals(Protocol.Client.PASS)) {
+					// pass
+				} else {
+					String[] coordinates = args[1].split(Character.toString(Protocol.General.DELIMITER2));
+					int x = Integer.parseInt(coordinates[0]);
+					int y = Integer.parseInt(coordinates[1]);
+					game.makeMove(x, y, playerNo);
+					game.sendMove(x, y, playerNo);
+				}	
+			} else {
+				sendError(Protocol.Server.INVALID, "A game has not yet started.");
+			}
+			
 			break;
 
 		case Protocol.Client.QUIT:
@@ -196,8 +201,7 @@ public class ClientHandler {
 	 * START <int numberPlayers>
 	 */
 	public void sendRequestSettings() {
-		String message = Protocol.Server.START + Protocol.General.DELIMITER1 + 2; // Wat als extensie is bijgevoegd dat het met meer spelers kan?
-																					
+		String message = Protocol.Server.START + Protocol.General.DELIMITER1 + 2; // Wat als extensie is bijgevoegd dat het met meer spelers kan?																	
 		send(message);
 	}
 
@@ -206,9 +210,25 @@ public class ClientHandler {
 	 * START <int numberPlayers> <String colorPlayer> <int boardSize> <String firstPlayer> <String secondPlayer>
 	 */
 	public void sendStart(int numberPlayers, String color, int DIM, String currentPlayer, String otherPlayer) {
+		if (clientName.equals(currentPlayer)) {
+			opponent = otherPlayer;
+		} else {
+			opponent = currentPlayer;
+		}
+		
 		String message = Protocol.Server.START + Protocol.General.DELIMITER1 + numberPlayers
 				+ Protocol.General.DELIMITER1 + color + Protocol.General.DELIMITER1 + DIM + Protocol.General.DELIMITER1
 				+ currentPlayer + Protocol.General.DELIMITER1 + otherPlayer;
+		send(message);
+	}
+	
+	public void sendFirst() {
+		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1 + "FIRST" + Protocol.General.DELIMITER1 + clientName;
+		send(message);
+	}
+	
+	public void sendMove(int x, int y) {
+		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + opponent + Protocol.General.DELIMITER1 + x + Protocol.General.DELIMITER2 + y + Protocol.General.DELIMITER1 + clientName;
 		send(message);
 	}
 }

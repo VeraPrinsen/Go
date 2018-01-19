@@ -8,7 +8,7 @@ public class TestBoard {
 
 	public static void main(String[] args) throws InvalidCoordinateException {
 		int DIM = 9;
-        Board board = new Board(DIM);
+        Board board = new Board(DIM, true);
                 
         board.setField(0, 1, Token.BLACK);
         board.setField(1, 1, Token.WHITE);

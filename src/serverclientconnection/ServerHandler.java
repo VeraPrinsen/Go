@@ -1,6 +1,7 @@
 package serverclientconnection;
 
 import general.*;
+import model.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 
@@ -19,6 +20,10 @@ public class ServerHandler {
 	private String serverName;
 	private int serverVersionNo;
 	private int[] serverExtensions;
+	
+	private Board board;
+	private Token color;
+	private String opponent;
 
 	public ServerHandler(Client client, BufferedReader in, BufferedWriter out) {
 		this.client = client;
@@ -40,7 +45,7 @@ public class ServerHandler {
 	public void run() {
 		serverInput = new ServerInputHandler(this, in);
 
-		Thread inputThread = new Thread(serverInput);
+		Thread inputThread = new Thread(serverInput, "ServerInput");
 		inputThread.start();
 
 		sendVersion();
@@ -79,27 +84,68 @@ public class ServerHandler {
 	public void processServerInput(String msg) {
 		String[] args = msg.split("\\" + Character.toString(Protocol.General.DELIMITER1));
 
+		client.print(msg);
+		client.print(args[0]);
+		
 		switch (args[0]) {
 			case Protocol.Server.NAME:
 				print("NAME command ontvangen");
 		
 				serverName = args[1];
-				// doe iets met versienummer & extensions $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+				serverVersionNo = Integer.parseInt(args[3]);
+				serverExtensions[0] = Integer.parseInt(args[5]);
+				serverExtensions[1] = Integer.parseInt(args[6]);
+				serverExtensions[2] = Integer.parseInt(args[7]);
+				serverExtensions[3] = Integer.parseInt(args[8]);
+				serverExtensions[4] = Integer.parseInt(args[9]);
+				serverExtensions[5] = Integer.parseInt(args[10]);
+				serverExtensions[6] = Integer.parseInt(args[11]);
 				
+				print("Connected to " + serverName);
+				showMainMenu();
 				break;
 	
 			case Protocol.Server.START:
 				print("START command ontvangen van " + serverName);
 		
-//				if (args.length == 2) {
-//					sendSettings();
-//				} else if (args.length == 6) {
-//					// Game has begun
-//				}
+				if (args.length == 2) {
+					sendSettings();
+				} else if (args.length == 6) {
+					// int numberPlayers = Integer.parseInt(args[1]);
+					if (args[2].equals(Protocol.General.BLACK)) {
+						color = Token.BLACK;
+					} else {
+						color = Token.WHITE;
+					}
+					
+					int boardSize = Integer.parseInt(args[3]);
+					if (color.equals(Token.BLACK)) {
+						opponent = args[5];
+					} else {
+						opponent = args[4];
+					}
+
+					board = new Board(boardSize, true);
+				}
 				break;
 	
 			case Protocol.Server.TURN:
 				print("TURN command ontvangen van " + serverName);
+				
+				if (args[2].equals("FIRST")) {
+					sendMove();
+				} else {
+					client.print(args[2]);
+					String[] coordinates = args[2].split(Character.toString(Protocol.General.DELIMITER2));
+					int x = Integer.parseInt(coordinates[0]);
+					int y = Integer.parseInt(coordinates[1]);
+					if (args[1].equals(opponent)) {
+						board.setField(x, y, color.other());
+						sendMove();
+					} else {
+						// This should not happen
+					}
+				}
 				
 				break;
 				
@@ -129,6 +175,30 @@ public class ServerHandler {
 	}
 	
 	/**
+	 * Is shown just after the server and client have made a connection.
+	 */
+	public void showMainMenu() {
+		print("What do you want to do?");
+		print("Request a game .............. 1");
+		print("Exit ........................ 2");
+		
+		boolean optionOK = false;
+		
+		while (!optionOK) {
+			int option = client.readInt("Choose an option");
+			if (option == 1) {
+				sendRequest();
+				optionOK = true;
+			} else if (option == 2) {
+				// EXIT
+				optionOK = true;
+			} else {
+				print("This is an invalid option. Try again.");
+			}
+		}
+	}
+	
+	/**
 	 * The method called when information must be send to the server.
 	 */
 	// TO DO: EXCEPTION HANDLING
@@ -152,6 +222,13 @@ public class ServerHandler {
 				+ Version.security + Protocol.General.DELIMITER1 + Version.multiplayer + Protocol.General.DELIMITER1
 				+ Version.simultaneous + Protocol.General.DELIMITER1 + Version.multimoves;
 		send(message);
+	}
+	
+	public void sendRequest() {
+		String message = Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 + Protocol.General.DELIMITER1
+				+ Protocol.Client.RANDOM; // default case, no extensions
+		send(message);
+		client.print("Game requested. Wait for other players to connect...");
 	}
 	
 	public void sendSettings() {
@@ -186,12 +263,15 @@ public class ServerHandler {
 		
 		String message = Protocol.Client.SETTINGS + Protocol.General.DELIMITER1 + colorString + Protocol.General.DELIMITER1 + boardSize;
 		send(message);
+		client.print("Settings send.");
 	}
 	
-	public void sendRequest() {
-		String message = Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 + Protocol.General.DELIMITER1
-				+ Protocol.Client.RANDOM; // default case, no extensions
+	public void sendMove() {
+		int x = client.readInt("On what row you want to place your stone?");
+		int y = client.readInt("On what column do you want to place your stone?");
+		
+		board.setField(x, y, color);
+		String message = Protocol.Client.MOVE + Protocol.General.DELIMITER1 + x + Protocol.General.DELIMITER2 + y;
 		send(message);
-		client.print("Game requested. Wait for other players to connect...");
 	}
 }

@@ -32,6 +32,11 @@ public class Server {
 		clients = new ArrayList<>();
 	}
 	
+	public void doNothing() {
+		
+	}
+	
+	
 	// GETTERS ======================================================================
 	public String getName() {
 		return this.serverName;
@@ -87,8 +92,8 @@ public class Server {
 			portOK = true;
 		}
 		
-		Thread tuiThread = new Thread(tui);
-		Thread gameThread = new Thread(gameServer);
+		Thread tuiThread = new Thread(tui, "ServerTUI");
+		Thread gameThread = new Thread(gameServer, "GameServer");
 		tuiThread.start();
 		gameThread.start();
 		
