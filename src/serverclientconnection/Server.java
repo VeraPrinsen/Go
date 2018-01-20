@@ -9,6 +9,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The file that is executed to start a server.
@@ -32,12 +34,7 @@ public class Server {
 		clients = new ArrayList<>();
 	}
 	
-	public void doNothing() {
-		
-	}
-	
-	
-	// GETTERS ======================================================================
+	// GETTERS & SETTERS ================================================================
 	public String getName() {
 		return this.serverName;
 	}

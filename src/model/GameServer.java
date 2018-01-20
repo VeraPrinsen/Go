@@ -57,7 +57,6 @@ public class GameServer implements Runnable {
 	public void run() {
 		while (true) {
 			lock.lock();
-			server.doNothing(); // If I disable this, underlying code will not be executed.....
 			if (lobby.size() >= 2) {
 				synchronized (lobby) {
 					ClientHandler player1 = lobby.get(0);

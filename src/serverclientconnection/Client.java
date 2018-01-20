@@ -5,6 +5,8 @@ import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The file that is executed to start a client.
@@ -21,23 +23,25 @@ public class Client {
 	BufferedReader in;
 	BufferedWriter out;
 	
+	Lock exitLock = new ReentrantLock();
+	
 	public Client() {
 		// TO DO: MAKE NAME CONFIGURABLE IN CLIENT TUI
 		this.tui = new ClientTUI(this);
 	}
 	
-	// GETTERS =================================================================
+	// GETTERS & SETTERS =================================================================
 	public String getName() {
 		return this.clientName;
 	}
 	
 	// INPUT PROCESSORS ========================================================
-//	/**
-//	 * 
-//	 */
-//	public void processClientInput(String message) {
-//		sh.processClientInput();
-//	}
+	/**
+	 * 
+	 */
+	public void processClientInput(String message) {
+		
+	}
 	
 	// PRINTERS & SENDERS ========================================================
 	/**
@@ -63,9 +67,10 @@ public class Client {
 	 * 		Create serverHandler that processes this in- and output
 	 */
 	// TO DO: EXCEPTION HANDLING
+	// TO DO: ASK FOR HUMAN OR COMPUTERPLAYER
 	// TO DO: ASK FOR NAME
 	// TO DO: ASK FOR HOST AND PORT
-	public void start() throws Exception {
+	public void start() throws Exception {		
 		// First: Ask for name
 		clientName = readString("What is your name?");
 		print("Welcome " + clientName + "!");

@@ -15,17 +15,17 @@ public class ClientTUI {
 		in = new BufferedReader(new InputStreamReader(System.in));
 	}
 	
-//	// THIS CHECKS FOR INPUT FROM THE CLIENT ITSELF
-//	public void run() {
-//		String msg;
-//		try {
-//			while (!(msg = in.readLine()).equals("exit")) {
-//				client.processClientInput(msg);
-//			}
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//	}
+	// THIS CHECKS FOR INPUT FROM THE CLIENT ITSELF
+	public void run() {
+		String msg;
+		try {
+			while (!(msg = in.readLine()).equals("exit")) {
+				client.processClientInput(msg);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 	public void print(String msg) {
 		System.out.println(msg);

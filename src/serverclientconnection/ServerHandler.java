@@ -11,7 +11,7 @@ import java.io.BufferedWriter;
  */
 public class ServerHandler {
 
-	private Client client;
+	public Client client;
 	private BufferedReader in;
 	private BufferedWriter out;
 	
@@ -22,6 +22,7 @@ public class ServerHandler {
 	private int[] serverExtensions;
 	
 	private Board board;
+	private Player player;
 	private Token color;
 	private String opponent;
 
@@ -51,33 +52,26 @@ public class ServerHandler {
 		sendVersion();
 	}
 
-	// GETTERS ========================================================================
+	// GETTERS & SETTERS ==============================================================
 	public String getName() {
 		return this.serverName;
 	}
 	
-	// METHODS FOR PLAYING THE GAME ===================================================
+	public Board getBoard() {
+		return this.board;
+	}
 	
+	public void setPlayer(Player player) {
+		this.player = player;
+	}
+	
+	// METHODS FOR PLAYING THE GAME ===================================================
+	public void makeMove(int x, int y) {
+		board.setField(x, y, color);
+		sendMove(x, y);
+	}
 	
 	// INPUT PROCESSORS ===============================================================
-//	/**
-//	 * When the ClientInput receives information from the client TUI, it is processed here.
-//	 */
-//	// TO DO: EXCEPTION HANDLING 
-//	// THIS CAN ALSO BE NUMBER BASED..
-//	public void processClientInput(String msg) throws Exception {
-//		switch (msg) {
-//			case Protocol.Client.REQUESTGAME: 
-//				sendRequest();
-//				break;
-//				
-//				
-//	
-//			case "EXIT":
-//				
-//				break;
-//		}
-//	}
 	/**
 	 * When the ServerInputHandler receives information from the server, it is processed here.
 	 */
@@ -133,7 +127,7 @@ public class ServerHandler {
 				print("TURN command ontvangen van " + serverName);
 				
 				if (args[2].equals("FIRST")) {
-					sendMove();
+					player.sendMove();
 				} else {
 					client.print(args[2]);
 					String[] coordinates = args[2].split(Character.toString(Protocol.General.DELIMITER2));
@@ -141,7 +135,7 @@ public class ServerHandler {
 					int y = Integer.parseInt(coordinates[1]);
 					if (args[1].equals(opponent)) {
 						board.setField(x, y, color.other());
-						sendMove();
+						player.sendMove();
 					} else {
 						// This should not happen
 					}
@@ -183,7 +177,6 @@ public class ServerHandler {
 		print("Exit ........................ 2");
 		
 		boolean optionOK = false;
-		
 		while (!optionOK) {
 			int option = client.readInt("Choose an option");
 			if (option == 1) {
@@ -225,10 +218,29 @@ public class ServerHandler {
 	}
 	
 	public void sendRequest() {
+		print("Do you want to play yourself or do you want the computer play for you?");
+		print("Play myself ................. 1");
+		print("Let computer play ........... 2");
+		
+		boolean optionOK = false;
+		while (!optionOK) {
+			int option = client.readInt("Choose an option");
+			if (option == 1) {
+				player = new HumanPlayer(this);
+				optionOK = true;
+			} else if (option == 2) {
+				player = new ComputerPlayer(this);
+				optionOK = true;
+			} else {
+				print("This is an invalid option. Try again.");
+			}
+		}
+		setPlayer(player);
+		
 		String message = Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 + Protocol.General.DELIMITER1
 				+ Protocol.Client.RANDOM; // default case, no extensions
 		send(message);
-		client.print("Game requested. Wait for other players to connect...");
+		print("Game requested. Wait for other players to connect...");
 	}
 	
 	public void sendSettings() {
@@ -266,11 +278,7 @@ public class ServerHandler {
 		client.print("Settings send.");
 	}
 	
-	public void sendMove() {
-		int x = client.readInt("On what row you want to place your stone?");
-		int y = client.readInt("On what column do you want to place your stone?");
-		
-		board.setField(x, y, color);
+	public void sendMove(int x, int y) {
 		String message = Protocol.Client.MOVE + Protocol.General.DELIMITER1 + x + Protocol.General.DELIMITER2 + y;
 		send(message);
 	}
