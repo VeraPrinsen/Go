@@ -12,10 +12,12 @@ public class ClientInputHandler implements Runnable {
 
 	private BufferedReader in;
 	private ClientHandler ch;
+	private boolean isOpen;
 	
 	public ClientInputHandler(ClientHandler ch, BufferedReader in) {
 		this.ch = ch;
 		this.in = in;
+		isOpen = true;
 	}
 	
 	/**
@@ -25,9 +27,23 @@ public class ClientInputHandler implements Runnable {
 	public void run() {
 		String msg;
 		try {
-			while ((msg = in.readLine()) != null) {
+			while (isOpen && (msg = in.readLine()) != null) {
 				ch.processClientInput(msg);
 			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		// if in.readLine() == null (input stream has ended)
+		System.out.println("Client has disconnected.");
+		
+		ch.shutDown();
+	}
+	
+	public void shutDown() {
+		try {
+			isOpen = false;
+			in.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

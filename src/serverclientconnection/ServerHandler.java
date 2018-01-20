@@ -4,6 +4,7 @@ import general.*;
 import model.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 
 /**
  * ServerHandler starts the threads for receiving and sending information from this specific client to the server.
@@ -50,6 +51,15 @@ public class ServerHandler {
 		inputThread.start();
 
 		sendVersion();
+	}
+	
+	public void shutDown() {
+		serverInput.shutDown();
+		try {
+			out.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	// GETTERS & SETTERS ==============================================================
@@ -281,5 +291,9 @@ public class ServerHandler {
 	public void sendMove(int x, int y) {
 		String message = Protocol.Client.MOVE + Protocol.General.DELIMITER1 + x + Protocol.General.DELIMITER2 + y;
 		send(message);
+	}
+	
+	public void sendQuit() {
+		
 	}
 }

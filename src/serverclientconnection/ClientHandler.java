@@ -53,10 +53,23 @@ public class ClientHandler {
 
 		sendVersion();
 	}
+	
+	public void shutDown() {
+		clientInput.shutDown();
+		try {
+			out.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
-	// GETTERS ========================================================================
+	// GETTERS & SETTERS ========================================================================
 	public String getName() {
 		return this.clientName;
+	}
+	
+	public Game getGame() {
+		return this.game;
 	}
 
 	// METHODS FOR PLAYING THE GAME =================================================== $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -229,6 +242,13 @@ public class ClientHandler {
 	
 	public void sendMove(int x, int y) {
 		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + opponent + Protocol.General.DELIMITER1 + x + Protocol.General.DELIMITER2 + y + Protocol.General.DELIMITER1 + clientName;
+		send(message);
+	}
+	
+	public void sendEndGame(String reason) {
+		// iets met bepaalScore();
+		// ENDGAME reden WINSPELER score VERLIESSPELER score
+		String message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason + Protocol.General.DELIMITER1;
 		send(message);
 	}
 }

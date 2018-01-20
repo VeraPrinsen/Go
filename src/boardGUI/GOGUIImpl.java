@@ -184,7 +184,7 @@ public class GOGUIImpl extends Application {
         }
 
         root.getChildren().addAll(boardLines);
-
+        
         if (mode3D){
             hint = new Sphere(currentSquareSize / 2);
             ((Sphere) hint).setMaterial(yellowMaterial);

@@ -2,9 +2,11 @@ package serverclientconnection;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -19,14 +21,11 @@ public class Client {
 	private String clientName;
 	private ClientTUI tui;
 	
-	ServerHandler sh;
-	BufferedReader in;
-	BufferedWriter out;
-	
-	Lock exitLock = new ReentrantLock();
+	private ServerHandler sh;
+	private BufferedReader in;
+	private BufferedWriter out;
 	
 	public Client() {
-		// TO DO: MAKE NAME CONFIGURABLE IN CLIENT TUI
 		this.tui = new ClientTUI(this);
 	}
 	
@@ -37,10 +36,10 @@ public class Client {
 	
 	// INPUT PROCESSORS ========================================================
 	/**
-	 * 
+	 * In between the directed input, you can still give commands in the ClientTUI, this is processed here.
 	 */
 	public void processClientInput(String message) {
-		
+		print(message);
 	}
 	
 	// PRINTERS & SENDERS ========================================================
@@ -67,8 +66,6 @@ public class Client {
 	 * 		Create serverHandler that processes this in- and output
 	 */
 	// TO DO: EXCEPTION HANDLING
-	// TO DO: ASK FOR HUMAN OR COMPUTERPLAYER
-	// TO DO: ASK FOR NAME
 	// TO DO: ASK FOR HOST AND PORT
 	public void start() throws Exception {		
 		// First: Ask for name
@@ -83,14 +80,30 @@ public class Client {
 		out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
 		
 		sh = new ServerHandler(this, in, out);
+		//Thread threadTUI = new Thread(tui);
+		//threadTUI.setPriority(Thread.MIN_PRIORITY);
+		//threadTUI.start();
 	}
 	
 	/**
 	 * This method is used when the client must be shut down.
 	 */
 	// TO DO: EXCEPTION HANDLING
-	public void shutDown() throws Exception {
-		sock.close();
+	public void shutDown() {
+		sh.sendQuit();
+		// do we expect the server to end the game and give us that command about the winner?
+		
+		// if in game, quit the game and remove all information about game
+		
+		sh.shutDown();
+		tui.shutDown();		
+		
+		print("GoodBye!");
+		try {
+			sock.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**

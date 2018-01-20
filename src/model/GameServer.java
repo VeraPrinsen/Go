@@ -17,12 +17,14 @@ public class GameServer implements Runnable {
 	
 	private Server server;
 	private List<ClientHandler> lobby;
-	Lock lock = new ReentrantLock();
-	Condition lobbyCondition = lock.newCondition();
+	private Lock lock = new ReentrantLock();
+	private Condition lobbyCondition = lock.newCondition();
+	private boolean isRunning;
 	
 	public GameServer(Server server) {
 		this.server = server;
 		lobby = new ArrayList<>();
+		isRunning = true;
 	}
 	
 	/**
@@ -55,7 +57,7 @@ public class GameServer implements Runnable {
 	// TO DO: MAKE lobby THREAD SAFE
 	// TO DO: EXCEPTION HANDLING
 	public void run() {
-		while (true) {
+		while (isRunning) {
 			lock.lock();
 			if (lobby.size() >= 2) {
 				synchronized (lobby) {
@@ -75,5 +77,9 @@ public class GameServer implements Runnable {
 			}
 			lock.unlock();
 		}
+	}
+	
+	public void shutDown() {
+		isRunning = false;
 	}
 }

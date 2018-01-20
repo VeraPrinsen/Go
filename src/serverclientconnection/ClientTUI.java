@@ -1,26 +1,36 @@
 package serverclientconnection;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class ClientTUI {
+public class ClientTUI implements Runnable {
 
 	private Client client;
 	private BufferedReader in;
+	private boolean isOpen;
+	private Lock exitLock = new ReentrantLock();
 	
 	public ClientTUI(Client client) {
 		this.client = client;
 		in = new BufferedReader(new InputStreamReader(System.in));
+		isOpen = true;
 	}
 	
 	// THIS CHECKS FOR INPUT FROM THE CLIENT ITSELF
 	public void run() {
 		String msg;
 		try {
-			while (!(msg = in.readLine()).equals("exit")) {
-				client.processClientInput(msg);
+			while (isOpen && (msg = in.readLine()) != null) {
+				// exitLock.unlock();
+				if (msg.equalsIgnoreCase("exit")) {
+					client.shutDown();
+				} else {
+					client.processClientInput(msg);
+				}
+				// exitLock.lock();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -31,19 +41,36 @@ public class ClientTUI {
 		System.out.println(msg);
 	}
 	
+	public void shutDown() {
+		isOpen = false;
+		try {
+			in.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * Method reads a String from the input console.
 	 */
 	// TO DO: EXCEPTION HANDLING
 	public String readString(String prompt) {
+		// exitLock.unlock();
+		String msg;
 		try {
 			System.out.print(prompt + ": ");
-			return in.readLine();
+			if ((msg = in.readLine()).equalsIgnoreCase("exit")) {
+				client.shutDown();
+				return "";
+			} else {
+				return msg;
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			return "";
+		} finally {
+			// exitLock.lock();
 		}
-		
 	}
 
 	/**
@@ -51,13 +78,8 @@ public class ClientTUI {
 	 */
 	// TO DO: EXCEPTION HANDLING
 	public int readInt(String prompt) {
-		try {
-			System.out.print(prompt + ": ");
-			return Integer.parseInt(in.readLine());
-		} catch (IOException e) {
-			e.printStackTrace();
-			return 0;
-		}
-		
+		// exitLock.unlock();
+		return Integer.parseInt(readString(prompt));
+		// exitLock.lock();
 	}
 }

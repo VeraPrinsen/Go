@@ -12,10 +12,12 @@ public class ServerInputHandler implements Runnable {
 	
 	private ServerHandler sh;
 	private BufferedReader in;
+	private boolean isOpen;
 	
 	public ServerInputHandler(ServerHandler sh, BufferedReader in) {
 		this.sh = sh;
 		this.in = in;
+		isOpen = true;
 	}
 	
 	/**
@@ -25,12 +27,25 @@ public class ServerInputHandler implements Runnable {
 	public void run() {
 		String msg;
 		try {
-			while ((msg = in.readLine()) != null) {
+			while (isOpen && (msg = in.readLine()) != null) {
 				sh.processServerInput(msg);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		// if in.readLine() == null (input stream has ended)
+		System.out.println("Server has disconnected.");
+				
+		sh.client.shutDown();
 	}
-
+	
+	public void shutDown() {
+		isOpen = false;
+		try {
+			in.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }
