@@ -1,24 +1,24 @@
-package serverclientconnection;
+package serverController;
 
-import model.*;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import general.*;
+import netView.ServerTUI;
+
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
-import general.Protocol;
+import java.io.IOException;
+import java.net.SocketException;
 
 /**
  * The file that is executed to start a server.
- * 
  * @author vera.prinsen
  */
 public class Server {
@@ -49,7 +49,7 @@ public class Server {
 	}
 
 	// INPUT PROCESSORS
-	// =============================================================
+	// =============================================================================
 	/**
 	 * This is what is done to the input that has come from the ServerTUI.
 	 */
@@ -62,7 +62,7 @@ public class Server {
 	}
 
 	// PRINTERS & SENDERS
-	// ============================================================
+	// =============================================================================
 	/**
 	 * This method is used to print some text on the output of the server.
 	 */
@@ -80,7 +80,7 @@ public class Server {
 	}
 
 	// START UP AND SHUTDOWN OF THE SERVER
-	// =========================================================
+	// ==============================================================================
 	/**
 	 * This is what is done when the server is started: A valid portnumber is gotten
 	 * from the Server TUI TO DO: FOR NOW IT IS DEFAULT 4567: see tui.getPort() The
@@ -129,8 +129,9 @@ public class Server {
 	/**
 	 * Shuts the server down.
 	 */
+	// TO DO: IF GAME HAS STARTEN, SCORING AND END GAME
 	public void shutDown() {
-		
+
 		for (ClientHandler ch : clients) {
 			if (ch.getGame() != null) {
 				// Check if the game has started (can you calculate an endscore)
@@ -138,11 +139,10 @@ public class Server {
 			}
 			ch.shutDown();
 		}
-		
+
 		tui.shutDown();
 		gameServer.shutDown();
-		
-		print("GoodBye!");
+
 		try {
 			ssock.close();
 		} catch (IOException e) {

@@ -1,7 +1,6 @@
-package serverclientconnection;
+package clientController;
 
 import general.*;
-import model.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -17,29 +16,27 @@ public class ServerHandler {
 	private BufferedWriter out;
 	
 	private ServerInputHandler serverInput;
-	
 	private String serverName;
 	private int serverVersionNo;
 	private int[] serverExtensions;
 	
-	private Board board;
+	private Game game;
 	private Player player;
-	private Token color;
-	private String opponent;
 
 	public ServerHandler(Client client, BufferedReader in, BufferedWriter out) {
 		this.client = client;
 		this.in = in;
 		this.out = out;
-
+		
 		serverExtensions = new int[7];
+		
+		game = null;
+		
 		run();
 	}
 	
 	/**
-	 * Starts the threads for:
-	 * receiving information from the server: ServerInputHandler
-	 * receiving information from the client TUI: ClientInput
+	 * Starts the thread for receiving information from the server: ServerInputHandler
 	 * 
 	 * And sends the information of the server:
 	 * Client name, version, extension information
@@ -66,19 +63,13 @@ public class ServerHandler {
 	public String getName() {
 		return this.serverName;
 	}
-	
-	public Board getBoard() {
-		return this.board;
-	}
+		
+	public Game getGame() {
+		return this.game;
+	}	
 	
 	public void setPlayer(Player player) {
 		this.player = player;
-	}
-	
-	// METHODS FOR PLAYING THE GAME ===================================================
-	public void makeMove(int x, int y) {
-		board.setField(x, y, color);
-		sendMove(x, y);
 	}
 	
 	// INPUT PROCESSORS ===============================================================
@@ -86,7 +77,7 @@ public class ServerHandler {
 	 * When the ServerInputHandler receives information from the server, it is processed here.
 	 */
 	public void processServerInput(String msg) {
-		String[] args = msg.split("\\" + Character.toString(Protocol.General.DELIMITER1));
+		String[] args = msg.split("\\" + Protocol.General.DELIMITER1);
 
 		client.print(msg);
 		client.print(args[0]);
@@ -115,21 +106,17 @@ public class ServerHandler {
 				if (args.length == 2) {
 					sendSettings();
 				} else if (args.length == 6) {
-					// int numberPlayers = Integer.parseInt(args[1]);
-					if (args[2].equals(Protocol.General.BLACK)) {
-						color = Token.BLACK;
-					} else {
-						color = Token.WHITE;
-					}
-					
-					int boardSize = Integer.parseInt(args[3]);
-					if (color.equals(Token.BLACK)) {
+					int numberPlayers = Integer.parseInt(args[1]);
+					String color = args[2];
+					int boardSize = Integer.parseInt(args[3]);				
+					String opponent;
+					if (color.equals(Protocol.General.BLACK)) {
 						opponent = args[5];
 					} else {
 						opponent = args[4];
 					}
-
-					board = new Board(boardSize, true);
+					game = new Game(this, numberPlayers, boardSize, player, opponent, color);
+					player.setGame(game);
 				}
 				break;
 	
@@ -140,14 +127,20 @@ public class ServerHandler {
 					player.sendMove();
 				} else {
 					client.print(args[2]);
-					String[] coordinates = args[2].split(Character.toString(Protocol.General.DELIMITER2));
+					
+					String[] coordinates = args[2].split(Protocol.General.DELIMITER2);
 					int x = Integer.parseInt(coordinates[0]);
 					int y = Integer.parseInt(coordinates[1]);
-					if (args[1].equals(opponent)) {
-						board.setField(x, y, color.other());
-						player.sendMove();
+					
+					if (args[1].equals(client.getName())) {
+						// Server has informed us our move was valid.
+						game.setMovePlayer(x, y, true);
 					} else {
-						// This should not happen
+						// Server informes us that our opponent has played the following valid move:
+						game.setMovePlayer(x, y, false);
+						
+						// And that it is the clients turn
+						player.sendMove();
 					}
 				}
 				
@@ -220,10 +213,10 @@ public class ServerHandler {
 	public void sendVersion() {
 		String message = Protocol.Client.NAME + Protocol.General.DELIMITER1 + client.getName() + Protocol.General.DELIMITER1
 				+ "VERSION" + Protocol.General.DELIMITER1 + Protocol.Client.VERSIONNO + Protocol.General.DELIMITER1
-				+ Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1 + Version.chat + Protocol.General.DELIMITER1
-				+ Version.challenge + Protocol.General.DELIMITER1 + Version.leaderboard + Protocol.General.DELIMITER1
-				+ Version.security + Protocol.General.DELIMITER1 + Version.multiplayer + Protocol.General.DELIMITER1
-				+ Version.simultaneous + Protocol.General.DELIMITER1 + Version.multimoves;
+				+ Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1 + Extensions.chat + Protocol.General.DELIMITER1
+				+ Extensions.challenge + Protocol.General.DELIMITER1 + Extensions.leaderboard + Protocol.General.DELIMITER1
+				+ Extensions.security + Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1
+				+ Extensions.simultaneous + Protocol.General.DELIMITER1 + Extensions.multimoves;
 		send(message);
 	}
 	
@@ -273,7 +266,7 @@ public class ServerHandler {
 		boolean boardsizeOK = false;
 		int boardSize = 0;
 		while (!boardsizeOK) {
-			int minBoardsize = 5;
+			int minBoardsize = 5;  
 			int maxBoardsize = 21;
 			boardSize = client.readInt("What do you want to be the size of the board? (Integer between " + minBoardsize + " - " + maxBoardsize + ")");
 			if ((boardSize < minBoardsize) || (boardSize > maxBoardsize)) {
@@ -286,11 +279,6 @@ public class ServerHandler {
 		String message = Protocol.Client.SETTINGS + Protocol.General.DELIMITER1 + colorString + Protocol.General.DELIMITER1 + boardSize;
 		send(message);
 		client.print("Settings send.");
-	}
-	
-	public void sendMove(int x, int y) {
-		String message = Protocol.Client.MOVE + Protocol.General.DELIMITER1 + x + Protocol.General.DELIMITER2 + y;
-		send(message);
 	}
 	
 	public void sendQuit() {

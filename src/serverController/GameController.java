@@ -1,54 +1,46 @@
-package model;
+package serverController;
 
 import general.Protocol;
-import serverclientconnection.*;
+import model.Board;
+import model.Token;
 
 /**
  * Game controls one game between two players.
  * @author vera.prinsen
  *
  */
-public class Game implements Runnable {
-	
+public class GameController implements Runnable {
+
 	private ClientHandler[] players;
+	
 	private String[] playerColor;
 	private Token[] playerToken;
 	private int numberPlayers = 2;
 	private int currentPlayer;
 	private Board board;
 	
-	public Game(ClientHandler ch1, ClientHandler ch2) {
-		players = new ClientHandler[numberPlayers];
-		playerColor = new String[numberPlayers];
-		playerToken = new Token[numberPlayers];
-		players[0] = ch1;
-		players[1] = ch2;
+	public GameController(ClientHandler ch1, ClientHandler ch2) {
+		this.players = new ClientHandler[numberPlayers];
+		this.playerColor = new String[numberPlayers];
+		this.playerToken = new Token[numberPlayers];
+		this.players[0] = ch1;
+		this.players[1] = ch2;
 	}
 	
+	// STARTERS & STOPPERS ==========================================================
 	/**
 	 * Before a game can start, both players have the game added to their clientHandler and the first player must choose a color and the boardsize.
 	 */
 	public void run() {
-		players[0].startGame(this, 0);
-		players[1].startGame(this, 1);
+		// Make a game for both clientHandler on this server
+		players[0].startGame(this, 0, players[1]);
+		players[1].startGame(this, 1 , players[0]);
 		
-		players[0].print("check1");
-		players[1].print("check2");
-		
+		// Send the first player the START command and request color and boardsize
 		players[0].sendRequestSettings();
 	}
 	
-	/**
-	 * If a player makes a move, this method changes it in the board.
-	 */
-	public void makeMove(int x, int y, int playerNo) {
-		try {
-			board.setField(x, y, playerToken[playerNo]);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
+	// GETTERS & SETTERS ==============================================================
 	/**
 	 * Set the boardsize after the first player has send their desires settings.
 	 */
@@ -83,6 +75,19 @@ public class Game implements Runnable {
 		}
 	}
 	
+	// GAME MECHANICS =================================================================
+	/**
+	 * If a player makes a move, this method changes it in the board.
+	 */
+	public void makeMove(int x, int y, int playerNo) {
+		try {
+			board.setField(x, y, playerToken[playerNo]);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	// MISCELLANEOUS METHODS ========================================================
 	/**
 	 * Return the color that if the opposite of the one that was entered.
 	 */
@@ -93,6 +98,7 @@ public class Game implements Runnable {
 			return Protocol.General.BLACK;
 	}
 	
+	// PRINTERS & SENDERS ===========================================================
 	/**
 	 * After the settings are send by the first player, this command is send to start the game for real.
 	 */
@@ -107,6 +113,14 @@ public class Game implements Runnable {
 	 * Send the move that player playerNo played to the other player.
 	 */
 	public void sendMove(int x, int y, int playerNo) {
+		players[playerNo].sendValidMove(x, y);
 		players[Math.abs(playerNo-1)].sendMove(x, y);
+	}
+	
+	/**
+	 * Send to the other player that player playerNo passed.
+	 */
+	public void sendPass(int playerNo) {
+		players[Math.abs(playerNo-1)].sendPass();
 	}
 }

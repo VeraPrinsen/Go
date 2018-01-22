@@ -1,4 +1,4 @@
-package serverclientconnection;
+package clientController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,13 +8,18 @@ import model.*;
 public class ComputerPlayer implements Player {
 
 	private ServerHandler sh;
+	private Game game;
 	
 	public ComputerPlayer(ServerHandler sh) {
 		this.sh = sh;
 	}
 	
+	public void setGame(Game game) {
+		this.game = game;
+	}
+	
 	public void sendMove() {
-		Board board = sh.getBoard();
+		Board board = game.getBoard();
 		int DIM = board.getDIM();
 		
 		List<Integer> emptyX = new ArrayList<>();
@@ -31,6 +36,6 @@ public class ComputerPlayer implements Player {
 	
 		int index = (int) Math.floor(Math.random() * emptyX.size());
 		
-		sh.makeMove(emptyX.get(index), emptyY.get(index));
+		game.sendMove(emptyX.get(index), emptyY.get(index));
 	}
 }

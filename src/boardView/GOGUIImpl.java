@@ -1,4 +1,4 @@
-package boardGUI;
+package boardView;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -14,6 +14,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Sphere;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -33,6 +34,8 @@ public class GOGUIImpl extends Application {
 
     private Node[][] board = null;
     private List<Line> boardLines = new ArrayList<>();
+    // NEW
+    private List<Text> boardText = new ArrayList<>();
     private Group root = null;
     private Stage primaryStage = null;
     private Node hint = null;
@@ -169,6 +172,10 @@ public class GOGUIImpl extends Application {
         root.getChildren().removeAll(boardLines);
         boardLines.clear();
 
+        // NEW
+        root.getChildren().removeAll(boardText);
+        boardText.clear();
+        
         int height = currentBoardHeight;
         int width = currentBoardWidth;
         int squareSize = currentSquareSize;
@@ -176,14 +183,19 @@ public class GOGUIImpl extends Application {
         // Draw horizontal lines
         for (int i = 1; i <= height; i++) {
             boardLines.add(new Line(squareSize, i * squareSize, width * squareSize, i * squareSize));
+            // Line(startX, startY, endX, endY)
+            // Text(x, y, text)
+            boardText.add(new Text(0.5 * squareSize, (i * squareSize) + 5, Integer.toString((i-1))));
         }
 
         // Draw vertical lines
         for (int i = 1; i <= width; i++) {
             boardLines.add(new Line(i * squareSize, squareSize, i * squareSize, height * squareSize));
+            boardText.add(new Text((i * squareSize) - 5, 0.5 * squareSize, Integer.toString((i-1))));
         }
 
         root.getChildren().addAll(boardLines);
+        root.getChildren().addAll(boardText);
         
         if (mode3D){
             hint = new Sphere(currentSquareSize / 2);

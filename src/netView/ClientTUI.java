@@ -1,10 +1,12 @@
-package serverclientconnection;
+package netView;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import clientController.Client;
 
 public class ClientTUI implements Runnable {
 
@@ -61,7 +63,7 @@ public class ClientTUI implements Runnable {
 			System.out.print(prompt + ": ");
 			if ((msg = in.readLine()).equalsIgnoreCase("exit")) {
 				client.shutDown();
-				return "";
+				return Integer.toString(-1);
 			} else {
 				return msg;
 			}
@@ -79,6 +81,7 @@ public class ClientTUI implements Runnable {
 	// TO DO: EXCEPTION HANDLING
 	public int readInt(String prompt) {
 		// exitLock.unlock();
+		// WHAT TO DO IF EXIT IS TYPED? THEN YOU DON'T WANT ANY INTEGER TO BE RETURNED, BUT THE PROGRAM JUST TO TERMINATE.
 		return Integer.parseInt(readString(prompt));
 		// exitLock.lock();
 	}

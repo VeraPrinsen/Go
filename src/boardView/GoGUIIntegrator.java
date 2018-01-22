@@ -1,4 +1,4 @@
-package boardGUI;
+package boardView;
 
 import javafx.application.Platform;
 

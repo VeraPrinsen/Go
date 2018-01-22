@@ -1,4 +1,7 @@
-package serverclientconnection;
+package clientController;
+
+import general.*;
+import netView.ClientTUI;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -91,14 +94,14 @@ public class Client {
 	// TO DO: EXCEPTION HANDLING
 	public void shutDown() {
 		sh.sendQuit();
-		// do we expect the server to end the game and give us that command about the winner?
 		
-		// if in game, quit the game and remove all information about game
+//		if (game != null) {
+//			
+//		}
 		
 		sh.shutDown();
 		tui.shutDown();		
 		
-		print("GoodBye!");
 		try {
 			sock.close();
 		} catch (IOException e) {

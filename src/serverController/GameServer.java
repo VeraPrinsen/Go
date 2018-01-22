@@ -1,12 +1,10 @@
-package model;
+package serverController;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import serverclientconnection.*;
 
 /**
  * The GameServer keeps a lobby with players that have requested a game and starts games.
@@ -65,7 +63,7 @@ public class GameServer implements Runnable {
 					ClientHandler player2 = lobby.get(1);
 					removeFromLobby(player1);
 					removeFromLobby(player2);
-					new Thread((new Game(player1, player2)), "Game with " + player1.getName() + " and " + player2.getName()).start();
+					new Thread((new GameController(player1, player2)), "Game with " + player1.getName() + " and " + player2.getName()).start();
 				}
 			} else {
 				try {

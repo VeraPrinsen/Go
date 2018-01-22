@@ -1,6 +1,6 @@
 package tests;
 
-import boardGUI.*;
+import boardView.*;
 import model.Board;
 import model.Token;
 

@@ -1,8 +1,10 @@
-package serverclientconnection;
+package netView;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+
+import serverController.Server;
 
 public class ServerTUI implements Runnable {
 

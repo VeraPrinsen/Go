@@ -1,7 +1,9 @@
-package serverclientconnection;
+package serverController;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+
+import general.Protocol;
 
 /**
  * The ClientInputHandler handles all the input that the server gets from this specific client.
@@ -34,10 +36,15 @@ public class ClientInputHandler implements Runnable {
 			e.printStackTrace();
 		}
 		
-		// if in.readLine() == null (input stream has ended)
-		System.out.println("Client has disconnected.");
-		
-		ch.shutDown();
+		// NOG EVEN NAAAR KIJKEN OF DIT GOED IS
+		try {
+			if (in.readLine() == null) {
+				ch.getOpponent().sendEndGame(Protocol.Server.ABORTED);
+				ch.shutDown();
+			}
+		} catch (IOException e) {
+			ch.shutDown();
+		}
 	}
 	
 	public void shutDown() {

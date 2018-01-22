@@ -1,4 +1,6 @@
-package boardGUI;
+package tests;
+
+import boardView.GoGUIIntegrator;
 
 /**
  * Example on how to use the GOGUI
@@ -6,7 +8,7 @@ package boardGUI;
  * @author Daan van Beek
  */
 
-public class MainTester {
+public class TestBoardMain {
 
     public static void main(String[] args) {
         GoGUIIntegrator gogui = new GoGUIIntegrator(true, true, 9);
