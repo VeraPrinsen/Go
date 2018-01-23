@@ -7,7 +7,13 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import clientController.Client;
+import general.Protocol;
 
+/**
+ * The ClientTUI takes care of the in- and output to and from the console.
+ * @author vera.prinsen
+ *
+ */
 public class ClientTUI implements Runnable {
 
 	private Client client;
@@ -69,7 +75,7 @@ public class ClientTUI implements Runnable {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-			return "";
+			return Protocol.Client.QUIT;
 		} finally {
 			// exitLock.lock();
 		}
@@ -81,7 +87,6 @@ public class ClientTUI implements Runnable {
 	// TO DO: EXCEPTION HANDLING
 	public int readInt(String prompt) {
 		// exitLock.unlock();
-		// WHAT TO DO IF EXIT IS TYPED? THEN YOU DON'T WANT ANY INTEGER TO BE RETURNED, BUT THE PROGRAM JUST TO TERMINATE.
 		return Integer.parseInt(readString(prompt));
 		// exitLock.lock();
 	}

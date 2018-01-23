@@ -1,8 +1,8 @@
 package serverController;
 
+import boardView.InvalidCoordinateException;
 import general.Protocol;
-import model.Board;
-import model.Token;
+import model.*;
 
 /**
  * Game controls one game between two players.
@@ -11,13 +11,14 @@ import model.Token;
  */
 public class GameController implements Runnable {
 
+	private int numberPlayers = 2;
 	private ClientHandler[] players;
-	
 	private String[] playerColor;
 	private Token[] playerToken;
-	private int numberPlayers = 2;
-	private int currentPlayer;
+	private int currentPlayer = -1;
+	
 	private Board board;
+	private int passes;
 	
 	public GameController(ClientHandler ch1, ClientHandler ch2) {
 		this.players = new ClientHandler[numberPlayers];
@@ -41,13 +42,6 @@ public class GameController implements Runnable {
 	}
 	
 	// GETTERS & SETTERS ==============================================================
-	/**
-	 * Set the boardsize after the first player has send their desires settings.
-	 */
-	public void setBoard(int DIM, boolean useGUI) {
-		board = new Board(DIM, useGUI);
-	}
-	
 	/**
 	 * Set first and second player and color of the players after the first player has send their desired settings.
 	 */
@@ -75,16 +69,75 @@ public class GameController implements Runnable {
 		}
 	}
 	
+	/**
+	 * Set the boardsize after the first player has send their desires settings.
+	 */
+	public void setBoard(int DIM, boolean useGUI) {
+		board = new Board(DIM, useGUI);
+		passes = 0;
+	}
+	
+	/**
+	 * Get the board.
+	 */
+	public Board getBoard() {
+		return this.board;
+	}
+	
+	/**
+	 * Set current player.
+	 */
+	public void setCurrentPlayer(int no) {
+		this.currentPlayer = no;
+	}
+	
+	/**
+	 * To get the currentplayer number.
+	 */
+	public int getCurrentPlayer() {
+		return this.currentPlayer;
+	}
+	
 	// GAME MECHANICS =================================================================
 	/**
-	 * If a player makes a move, this method changes it in the board.
+	 * If a player passes, this method is called and no changes are made to the board.
+	 */
+	public void makePass(int playerNo) {
+		passes++;
+		sendPass(playerNo);
+	}
+	
+	/**
+	 * If a player makes a move. This method checks if the move is valid.
+	 * If not, the INVALIDMOVE command is send to the client,
+	 * otherwise this method changes it in the board and sends a confirmation to the players.
 	 */
 	public void makeMove(int x, int y, int playerNo) {
+		boolean validMove = false;
 		try {
-			board.setField(x, y, playerToken[playerNo]);
-		} catch (Exception e) {
-			e.printStackTrace();
+			validMove = board.checkMove(x, y, playerToken[playerNo]);
+		} catch (InvalidCoordinateException e) {
+			players[playerNo].sendError(Protocol.Server.INVALID, e.getMessage());
 		}
+	
+		if (validMove) {
+			board.setField(x, y, playerToken[playerNo]);
+			sendMove(x, y, playerNo);
+		}
+	}
+	
+	/**
+	 * After a player passes, this is called to check if the game has finished.
+	 */
+	public boolean gameOver() {
+		return passes > 1;
+	}
+	
+	/**
+	 * When the game is over, for each player the score can be determined by calling this method.
+	 */
+	public int score(int playerNo) {
+		return board.getScore(playerToken[playerNo]);
 	}
 	
 	// MISCELLANEOUS METHODS ========================================================
@@ -114,6 +167,7 @@ public class GameController implements Runnable {
 	 */
 	public void sendMove(int x, int y, int playerNo) {
 		players[playerNo].sendValidMove(x, y);
+		currentPlayer = Math.abs(playerNo-1);
 		players[Math.abs(playerNo-1)].sendMove(x, y);
 	}
 	
@@ -121,6 +175,16 @@ public class GameController implements Runnable {
 	 * Send to the other player that player playerNo passed.
 	 */
 	public void sendPass(int playerNo) {
+		players[playerNo].sendValidPass();
+		currentPlayer = Math.abs(playerNo-1);
 		players[Math.abs(playerNo-1)].sendPass();
+	}
+	
+	/**
+	 * Send to players when the game has ended.
+	 */
+	public void sendEnd(String reason) {
+		players[0].sendEndGame(reason);
+		players[1].sendEndGame(reason);
 	}
 }

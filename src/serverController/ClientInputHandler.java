@@ -32,8 +32,10 @@ public class ClientInputHandler implements Runnable {
 			while (isOpen && (msg = in.readLine()) != null) {
 				ch.processClientInput(msg);
 			}
+			ch.print("CLIENTINPUT OUT OF WHILE LOOP");
+			// If the client disconnects, the loop will terminate and will end up here.
 		} catch (IOException e) {
-			e.printStackTrace();
+			ch.print("CLIENTINPUT IOEXCEPTION");
 		}
 		
 		// NOG EVEN NAAAR KIJKEN OF DIT GOED IS

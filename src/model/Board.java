@@ -15,8 +15,9 @@ public class Board {
 
 	private final int DIM;
 	private Field[] board;
+	private Field[] previousBoard1;
+	private Field[] previousBoard2;
 	private List<Group> groups;
-	private int passes;
 
 	private boolean useGUI;
 	private GOGUI gui;
@@ -24,6 +25,8 @@ public class Board {
 	public Board(int DIM, boolean useGUI) {
 		this.DIM = DIM;
 		this.board = new Field[DIM * DIM];
+		previousBoard1 = null;
+		previousBoard2 = null;
 		this.useGUI = useGUI;
 		if (useGUI) {
 			this.gui = new GoGUIIntegrator(false, false, DIM);
@@ -68,27 +71,27 @@ public class Board {
 			}
 		}
 
-		// Set the amount of consecutive passes to zero
-		passes = 0;
-		update();
+		update(Token.EMPTY);
 
 		if (useGUI) {
 			gui.startGUI();
 			gui.setBoardSize(DIM);
 		}
 	}
-
+	
 	/**
 	 * If a change is made to the board, update all information.
 	 */
-	public void update() {
+	public void update(Token t) {
 		// update after a change is done to the board
 		makeGroups();
 		// 6) Determine the perimeter (can be a new method)
 		updatePerimeters();
 		// 7) For each of the stones in the group, add the locations that are empty
 		// right beside them
-		checkCaptured();
+		if (!t.equals(Token.EMPTY)) {
+			checkCaptured(t);
+		}
 	}
 
 	/**
@@ -106,33 +109,56 @@ public class Board {
 	public int getDIM() {
 		return this.DIM;
 	}
+	
+	public Field[] getFields() {
+		return board;
+	}
+	
+	public List<Group> getGroups() {
+		return groups;
+	}
+	
+	public int getScore(Token t) {
+		int score  = 0;
+		
+		for (Group g : groups) {
+			if (g.getToken().equals(Token.EMPTY) && g.isCaptured(t)) {
+				score = score + g.size();
+			}
+		}
+		
+		for (Field f : board) { 
+			if (f.getToken().equals(t)) {
+				score++;
+			}
+		}
+		
+		return score;
+	}
 
 	// MISCELLANEOUS METHODS
 	// ==============================================================
 	/**
-	 * Makes a copy of the current Board class.
+	 * Make a copy of the whole Board class.
 	 */
-	public Board deepCopy() {
+	public Board boardCopy() {
 		Board newboard = new Board(DIM, false);
-		for (int i = 0; i < DIM * DIM; i++) {
-			newboard.setField(i, this.getField(i));
+		for (int i = 0; i < board.length; i++) {
+			newboard.setField(i, board[i].getToken());
 		}
 		return newboard;
 	}
-
+	
 	/**
 	 * Makes a copy of the current Field[] board.
 	 */
-	// TO DO: IMPLEMENT
 	public Field[] fieldCopy() {
-		return null;
-	}
-
-	/**
-	 * If a player passed.
-	 */
-	public void pass(Token t) {
-		passes++;
+		Field[] newfield = new Field[board.length];
+		for (int i = 0; i < board.length; i++) {
+			newfield[i] = new Field(board[i].getX(), board[i].getY());
+			newfield[i].setToken(board[i].getToken());
+		}
+		return newfield;
 	}
 
 	// INDEXERS
@@ -165,9 +191,10 @@ public class Board {
 	 * update the boardinformation through update().
 	 */
 	private void setField(int i, Token t) {
+		previousBoard2 = previousBoard1;
+		previousBoard1 = fieldCopy();
 		board[i].setToken(t);
-		passes = 0;
-		update();
+		update(t);
 	}
 
 	/**
@@ -194,6 +221,42 @@ public class Board {
 
 	// CHECKS
 	// ===================================================================================
+	public boolean checkMove(int x, int y, Token t) throws InvalidCoordinateException {
+		if (!isField(x, y)) {
+			throw new InvalidCoordinateException("The coordinates lie not on the game board.");
+		} else if (!isEmptyField(x, y)) {
+			throw new InvalidCoordinateException("The field on the board is not empty.");
+		} else {
+			Board nextBoard = boardCopy();
+			nextBoard.setField(x, y, t);
+			
+			if (boardsEqual(nextBoard.getFields(), previousBoard1) || boardsEqual(nextBoard.getFields(), previousBoard2)) {
+				throw new InvalidCoordinateException("Cannot make a move that will result in a boardstate that has already been there.");
+			}
+		}
+
+		return true;
+	}
+	
+	//@ requires board1.length == board2.length
+	public boolean boardsEqual(Field[] board1, Field[] board2) {
+		if (board1 != null && board2 != null) {
+			for (int i = 0; i < board1.length; i++) {
+				Field f1 = board1[i];
+				Field f2 = board2[i];
+				
+				System.out.println(i + ": " + f1.getToken() + " / " + f2.getToken());
+				if (!f1.getToken().equals(f2.getToken())) {
+					return false;
+				}
+			}
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
 	public boolean isField(int index) {
 		return (index < (DIM * DIM)) && (index >= 0);
 	}
@@ -209,37 +272,42 @@ public class Board {
 	public boolean isEmptyField(int x, int y) {
 		return isEmptyField(index(x, y));
 	}
+	
+	
 
 	/**
 	 * Check for all groups, if a group is captured.
 	 */
 	// TO DO: FIRST CHECK ALL THE GROUPS OF THE OPPONENT
-	public void checkCaptured() {
+	public void checkCaptured(Token token) {
 		// this should be done every time the board changes, right after makeGroups()
 
-		// 1) For each of the groups
-		for (Group g : groups) {
-			boolean isCaptured = true;
-			Token t = g.getToken();
-			// that is not empty
-			if (!t.equals(Token.EMPTY)) {
-				Set<Field> perimeter = g.getPerimeter();
-				// 2) Check all the perimeter locations for the tokens of the other color
-				for (Field p : perimeter) {
-					if (!p.getToken().equals(t.other())) {
-						isCaptured = false;
-						break;
+		Token[] tokenArray = {token.other(), token};
+		
+		for (Token currentToken : tokenArray) {
+			for (Group g : groups) {
+				boolean isCaptured = true;
+				Token t = g.getToken();
+				// that is not empty
+				if (t.equals(currentToken)) {
+					Set<Field> perimeter = g.getPerimeter();
+					// 2) Check all the perimeter locations for the tokens of the other color
+					for (Field p : perimeter) {
+						if (!p.getToken().equals(t.other())) {
+							isCaptured = false;
+							break;
+						}
+					}
+
+					// 3) If each location of the perimeter is occupied by the other color, the
+					// group is captured and removed from the board.
+					if (isCaptured) {
+						System.out.println("Group " + t.toString() + " is captured");
+						removeGroup(g);
 					}
 				}
-
-				// 3) If each location of the perimeter is occupied by the other color, the
-				// group is captured and removed from the board.
-				if (isCaptured) {
-					System.out.println("Group " + t.toString() + " is captured");
-					removeGroup(g);
-				}
 			}
-		}
+		}		
 	}
 
 	// @ requires gameOver()
@@ -247,8 +315,9 @@ public class Board {
 		return false;
 	}
 
-	public boolean gameOver() {
-		return this.passes > 1;
+	//@ requires this.passes > 1
+	public void gameOver() {
+		// Observer, Observable????
 	}
 
 	// MAKE & CHANGE GROUPS

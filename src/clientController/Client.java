@@ -32,7 +32,7 @@ public class Client {
 		this.tui = new ClientTUI(this);
 	}
 	
-	// GETTERS & SETTERS =================================================================
+	// GETTERS & SETTERS =================================================================	
 	public String getName() {
 		return this.clientName;
 	}

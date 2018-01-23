@@ -42,4 +42,19 @@ public class Group {
 			}
 		}
 	}
+	
+	public boolean isCaptured(Token t) {
+		boolean isCaptured = true;
+		for (Field f : perimeterFields) {
+			if (!f.getToken().equals(t)) {
+				isCaptured = false;
+				break;
+			}
+		}
+		return isCaptured;
+	}
+	
+	public int size() {
+		return groupFields.size();
+	}
 }

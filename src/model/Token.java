@@ -13,4 +13,14 @@ public enum Token {
 			return Token.EMPTY;
 		}
 	}
+	
+	public String toString() {
+		if (this.equals(Token.BLACK)) {
+			return "W";
+		} else if (this.equals(Token.WHITE)) {
+			return "B";
+		} else {
+			return "E";
+		}
+	}
 }

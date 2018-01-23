@@ -17,21 +17,25 @@ public class HumanPlayer implements Player {
 	}
 	
 	public void sendMove() {
-		int x = sh.client.readInt("On what row you want to place your stone?");
+		String x = sh.client.readString("On what row you want to place your stone?");
 		
-		// exit is typed
-		if (x == -1) {
+		if (x.equals(Protocol.Client.QUIT)) {
+			return;
+		} else if (x.equalsIgnoreCase("pass")) {
+			game.sendPass();
 			return;
 		}
 		
-		int y = sh.client.readInt("On what column do you want to place your stone?");
+		String y = sh.client.readString("On what column do you want to place your stone?");
 		
-		// exit is typed
-		if (y == -1) {
+		if (y.equals(Protocol.Client.QUIT)) {
+			return;
+		} else if (y.equalsIgnoreCase("pass")) {
+			game.sendPass();
 			return;
 		}
 		
-		game.sendMove(x, y);
+		game.sendMove(Integer.parseInt(x), Integer.parseInt(y));
 	}
 	
 }

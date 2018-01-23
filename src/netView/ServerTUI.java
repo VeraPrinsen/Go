@@ -4,14 +4,21 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import general.Protocol;
 import serverController.Server;
 
+/**
+ * The ServerTUI takes care of the in- and output to and from the console.
+ * 
+ * @author vera.prinsen
+ *
+ */
 public class ServerTUI implements Runnable {
 
 	private Server server;
 	private BufferedReader in;
 	private boolean isOpen;
-	
+
 	public ServerTUI(Server server) {
 		this.server = server;
 		in = new BufferedReader(new InputStreamReader(System.in));
@@ -25,14 +32,58 @@ public class ServerTUI implements Runnable {
 	public void run() {
 		String msg;
 		try {
+			print("check1");
 			while (isOpen && (msg = in.readLine()) != null) {
+				print("check2");
 				server.processServerInput(msg);
 			}
 		} catch (IOException e) {
+			// WHAT KIND OF EXCEPTION WILL THIS BE?
 			e.printStackTrace();
 		}
 	}
 
+	// INPUT
+	// ====================================================================================
+	/**
+	 * ReadString from Server TUI
+	 */
+	// TO DO: EXCEPTION HANDLING
+	public String readString(String prompt) {
+		String msg = "";
+		System.out.print(prompt + ": ");
+		try {
+			msg = in.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return msg;
+	}
+
+	/**
+	 * Before the TUI is started, this is called to get the port that the server
+	 * must listen on.
+	 */
+	// TO DO: EXCEPTION HANDLING
+	public int getPort() throws Exception {
+		boolean portOK = false;
+		int portInt = 0;
+
+		while (!portOK) {
+			String portString = readString("Enter the port you want to use");
+			try {
+				portInt = Integer.parseInt(portString);
+				portOK = true;
+			} catch (NumberFormatException e) {
+				print("The input must be an integer.");
+			}
+		}
+
+		return portInt;
+	}
+
+	// OUTPUT
+	// ====================================================================================
 	/**
 	 * This method prints output on the console of the server.
 	 */
@@ -40,18 +91,12 @@ public class ServerTUI implements Runnable {
 		System.out.println(msg);
 	}
 
+	// SHUTDOWN TUI
+	// ====================================================================================
 	/**
-	 * Before the TUI is started, this is called to get the port that the server
-	 * must listen on.
+	 * This method is called when the server wants to shut down.
 	 */
-	// TO DO: NOW IT IS DEFAULT, MAKE IT CONFIGURABLE (JUST REMOVE THE COMMANDS AND
-	// REMOVE return 4567;)
-	public int getPort() throws Exception {
-		// print("Enter the port you want to use: ");
-		// return Integer.parseInt(in.readLine());
-		return 4567;
-	}
-	
+	// TO DO: EXCEPTION HANDLING
 	public void shutDown() {
 		try {
 			isOpen = false;

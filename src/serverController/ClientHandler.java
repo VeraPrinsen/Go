@@ -55,8 +55,9 @@ public class ClientHandler {
 	}
 
 	public void shutDown() {
-		clientInput.shutDown();
+		//clientInput.shutDown();
 		try {
+			in.close();
 			out.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -117,6 +118,12 @@ public class ClientHandler {
 			clientExtensions[5] = Integer.parseInt(args[10]);
 			clientExtensions[6] = Integer.parseInt(args[11]);
 
+			if (clientVersionNo != Protocol.Server.VERSIONNO) {
+				sendError(Protocol.Server.INCOMPATIBLEPROTOCOL, "The server runs protocol version " + Protocol.Server.VERSIONNO + ". This is not compatible with your version no. " + clientVersionNo + ".");
+				shutDown();
+				return;
+			}
+			
 			print("[" + clientName + " has entered]");
 			break;
 
@@ -137,20 +144,39 @@ public class ClientHandler {
 			break;
 
 		case Protocol.Client.MOVE:
-			print("MOVE command ontvangen van " + clientName);
-
-			if (game != null) {
+			if ((game != null) || (game.getCurrentPlayer() != playerNo)) {
 				if (args[1].equals(Protocol.Client.PASS)) {
-					game.sendPass(playerNo);
+					game.makePass(playerNo);
+					
+					if (game.gameOver()) {
+						// GAME OVER
+						game.setCurrentPlayer(-1);
+						game.sendEnd(Protocol.Server.FINISHED);
+					} else {
+						// expect a move from the other player
+					}
 				} else {
 					String[] coordinates = args[1].split(Protocol.General.DELIMITER2);
-					int x = Integer.parseInt(coordinates[0]);
-					int y = Integer.parseInt(coordinates[1]);
-					game.makeMove(x, y, playerNo);
-					game.sendMove(x, y, playerNo);
+					int x = 0;
+					int y = 0;
+					try {
+						x = Integer.parseInt(coordinates[0]);
+						y = Integer.parseInt(coordinates[1]);
+						game.makeMove(x, y, playerNo);
+					} catch (NumberFormatException e) {
+						sendError(Protocol.Server.INVALID, "Invalid coordinates, they should be integers.");
+					}
+					
+					
 				}
 			} else {
-				sendError(Protocol.Server.INVALID, "A game has not yet started.");
+				if (game != null) {
+					sendError(Protocol.Server.INVALID, "A game has not started yet.");
+				} else if (game.getCurrentPlayer() != playerNo) {
+					sendError(Protocol.Server.INVALID, "It is not your turn.");
+				} else {
+					sendError(Protocol.Server.INVALID, "Invalid move.");
+				}	
 			}
 
 			break;
@@ -158,10 +184,12 @@ public class ClientHandler {
 		case Protocol.Client.QUIT:
 			print("QUIT command ontvangen van " + clientName);
 
-			// ALS IN GAME
-			opponent.sendEndGame(Protocol.Server.ABORTED);
-			opponent.endGame();
-			this.endGame();
+			if (game != null && game.getBoard() != null) {
+				opponent.sendEndGame(Protocol.Server.ABORTED);
+				opponent.endGame();
+				this.endGame();
+			}
+		
 			break;
 
 		default:
@@ -210,8 +238,14 @@ public class ClientHandler {
 	}
 
 	/**
-	 * method that constructs and sends the ERROR command, format: ERROR <String
-	 * typeOfError> <String errorMessage>
+	 * method that constructs and sends the ERROR command
+	 * format: ERROR <String typeOfError> <String errorMessage>
+	 * typeOfError can be:
+	 * 		UNKNOWNCOMMAND
+	 * 		INVALIDMOVE
+	 * 		NAMETAKEN
+	 * 		INCOMPATIBLEPROTOCOL
+	 * 		OTHER
 	 */
 	public void sendError(String error, String errorMessage) {
 		String message = Protocol.Server.ERROR + Protocol.General.DELIMITER1 + error + Protocol.General.DELIMITER1
@@ -275,8 +309,18 @@ public class ClientHandler {
 	 * format: TURN <String opponent / previousPlayer> PASS <String clientName / nextPlayer>
 	 */
 	public void sendPass() {
-		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + opponent + Protocol.General.DELIMITER1
+		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + opponent.getName() + Protocol.General.DELIMITER1
 				+ Protocol.Server.PASS + Protocol.General.DELIMITER1 + clientName;
+		send(message);
+	}
+	
+	/**
+	 * Method that constructs and sends to the previous player that his pass is accepted.
+	 * format: TURN <String clientName / previousPlayer> PASS <String opponent / nextPlayer>
+	 */
+	public void sendValidPass() {
+		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1
+				+ Protocol.Server.PASS + Protocol.General.DELIMITER1 + opponent.getName();
 		send(message);
 	}
 
@@ -288,11 +332,19 @@ public class ClientHandler {
 	 * 		- ABORTED (someone (server or client) has left the game and therefore the game stopped).
 	 * 		- TIMEOUT (the currentPlayer did not make a move within the TIMEOUT time).
 	 */
-	// TO DO: IMPLEMENT
 	public void sendEndGame(String reason) {
-		// iets met bepaalScore();
+		int scorePlayer = game.score(playerNo);
+		int scoreOpponent = game.score(Math.abs(playerNo - 1));
+		game = null;
+		
 		// ENDGAME reden WINSPELER score VERLIESSPELER score
-		String message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason + Protocol.General.DELIMITER1;
+		String message;
+		if (scorePlayer > scoreOpponent) {
+			message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1 + scorePlayer + Protocol.General.DELIMITER1 + opponent.getName() + Protocol.General.DELIMITER1 + scoreOpponent;
+		} else  {
+			message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason + Protocol.General.DELIMITER1 + opponent.getName() + Protocol.General.DELIMITER1 + scoreOpponent + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1 + scorePlayer;
+		}
+		
 		send(message);
 	}
 }
