@@ -122,7 +122,7 @@ public class Client {
 		in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 		out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
 		
-		sh = new ServerHandler(this, in, out);
+		sh = new ServerHandler(this, sock, in, out);
 	}
 	
 	/**
@@ -131,16 +131,11 @@ public class Client {
 	// TO DO: EXCEPTION HANDLING
 	// TO DO: IMPLEMENT
 	public void shutDown() {
-//		sh.sendQuit();
-//		
-//		sh.shutDown();
-//		tui.shutDown();		
-//		
-//		try {
-//			sock.close();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
+		// This is called when the whole program has to shut down (Server disconnect or QUIT in main menu)
+		sh.shutDown();
+
+		print("");
+		print("Thanks for playing! GoodBye!");
 	}
 	
 	/**

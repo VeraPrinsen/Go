@@ -28,24 +28,27 @@ public class ServerInputHandler implements Runnable {
 		String msg;
 		try {
 			while (isOpen && (msg = in.readLine()) != null) {
-				sh.processServerInput(msg);
+				Thread newInput = new Thread(new ServerInputProcessor(sh, msg));
+				newInput.setDaemon(true);
+				newInput.start();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		// if in.readLine() == null (input stream has ended)
-		System.out.println("Server has disconnected.");
-				
-		sh.client.shutDown();
+	
+		// Server has disconnected
+		sh.print("");
+		sh.print("");
+		sh.print("The server has disconnected");
+		sh.client.shutDown();		
 	}
 	
 	public void shutDown() {
-		isOpen = false;
-		try {
-			in.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		isOpen = false;
+//		try {
+//			in.close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 }

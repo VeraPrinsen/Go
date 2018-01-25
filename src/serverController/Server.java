@@ -35,7 +35,6 @@ public class Server {
 	private Thread gameThread;
 	
 	private List<ClientHandler> clients;
-	private boolean isRunning;
 	
 	public Server() {
 		serverName = "ServerVera";
@@ -43,7 +42,6 @@ public class Server {
 		gameServer = new GameServer(this);
 
 		clients = new ArrayList<>();
-		isRunning = true;
 	}
 
 	// START UP AND SHUTDOWN OF THE SERVER
@@ -82,21 +80,18 @@ public class Server {
 		Thread listener = new Thread(new Runnable() {
 			public void run() {
 				try {
-					while (isRunning) {
+					while (true) {
 						Socket sock = ssock.accept();
 						BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 						BufferedWriter out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
-						ClientHandler ch = new ClientHandler(Server.this, in, out);
+						ClientHandler ch = new ClientHandler(Server.this, sock, in, out);
 						clients.add(ch);
 					}
-					print("While loop stopped.");
 				} catch (SocketException e) {
-					print("Server is closed.");
+					print("Socket Exception occured.");
 				} catch (Exception e) {
-					e.printStackTrace();
+					print("Regular Exception occured.");
 				}
-				
-				print("Server closed.");
 			}
 		});
 		
@@ -109,9 +104,11 @@ public class Server {
 	 */
 	public void shutDown() {
 		// Prevent other clients from connecting
-		isRunning = false;
-		
-		print("check1");
+		try {
+			ssock.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
 		List<GameController> games = gameServer.getGames();
 		for (GameController gc : games) {
@@ -119,34 +116,15 @@ public class Server {
 			gc.shutDown();
 		}
 		
-		print("check2");
-		
 		for (ClientHandler ch : clients) {
 			ch.shutDown();
 		}
-
-		print("check3");
-		
-		gameServer.shutDown();
-		
-//		try {
-//			gameThread.join();
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-		
-		print("check4");
 		
 		print("GoodBye!");
+		
+		gameServer.shutDown();
 		tui.shutDown();
-		
-		try {
-			ssock.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		print("Server is reallly!!! closed now.");
+	
 	}
 
 	/**

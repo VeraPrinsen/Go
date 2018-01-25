@@ -40,12 +40,12 @@ public class ClientInputHandler implements Runnable {
 			ch.print("CLIENTINPUT IOEXCEPTION");
 		}
 
-		// NOG EVEN NAAAR KIJKEN OF DIT GOED IS
-		if (isOpen) {
-			ch.getGame().sendEnd(Protocol.Server.ABORTED);
-			ch.shutDown();
-		}
-		
+//		// NOG EVEN NAAAR KIJKEN OF DIT GOED IS
+//		if (isOpen) {
+//			ch.getGame().sendEnd(Protocol.Server.ABORTED);
+//			ch.shutDown();
+//		}
+//		
 		ch.print("ClientInputHandler closed.");
 	}
 

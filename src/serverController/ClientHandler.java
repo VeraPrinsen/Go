@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 
 import java.io.IOException;
+import java.net.Socket;
 
 /**
  * ClientHandler starts the threads for receiving and sending information from
@@ -16,6 +17,7 @@ import java.io.IOException;
 public class ClientHandler {
 
 	private Server server;
+	private Socket sock;
 	private BufferedReader in;
 	private BufferedWriter out;
 
@@ -29,8 +31,9 @@ public class ClientHandler {
 	private ClientHandler opponent;
 	private int playerNo = -1;
 
-	public ClientHandler(Server server, BufferedReader in, BufferedWriter out) {
+	public ClientHandler(Server server, Socket sock, BufferedReader in, BufferedWriter out) {
 		this.server = server;
+		this.sock = sock;
 		this.in = in;
 		this.out = out;
 
@@ -55,24 +58,14 @@ public class ClientHandler {
 		sendVersion();
 	}
 
-	public void shutDown() {
-//		clientInput.shutDown();
-//		try {
-//			inputThread.join();
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-		
-		print("ch.check1");
-		
+	public void shutDown() {		
 		try {
+			sock.close();
 			in.close();
 			out.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			print("IOException occured.");
 		}
-		
-		print("ch.check2");
 	}
 
 	// GETTERS & SETTERS ========================================================================

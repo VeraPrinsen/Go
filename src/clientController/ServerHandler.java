@@ -4,6 +4,10 @@ import general.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.net.Socket;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * ServerHandler starts the threads for receiving and sending information from
@@ -14,6 +18,7 @@ import java.io.IOException;
 public class ServerHandler {
 
 	public Client client;
+	private Socket sock;
 	private BufferedReader in;
 	private BufferedWriter out;
 	
@@ -24,9 +29,13 @@ public class ServerHandler {
 
 	private Game game;
 	private Player player;
+	
+	Lock lock = new ReentrantLock();
+	Condition condition = lock.newCondition();
 
-	public ServerHandler(Client client, BufferedReader in, BufferedWriter out) {
+	public ServerHandler(Client client, Socket sock, BufferedReader in, BufferedWriter out) {
 		this.client = client;
+		this.sock = sock;
 		this.in = in;
 		this.out = out;
 
@@ -54,11 +63,14 @@ public class ServerHandler {
 	}
 
 	public void shutDown() {
-		serverInput.shutDown();
+		
+		
 		try {
+			sock.close();
+			in.close();
 			out.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			print("IOException occured.");
 		}
 	}
 
@@ -101,8 +113,8 @@ public class ServerHandler {
 			break;
 
 		case Protocol.Server.START:
-			print("START command ontvangen van " + serverName);
-
+			lock.lock();
+			
 			if (args.length == 2) {
 				sendSettings();
 			} else if (args.length == 6) {
@@ -117,12 +129,25 @@ public class ServerHandler {
 				}
 				game = new Game(this, numberPlayers, boardSize, player, opponent, color);
 				player.setGame(game);
+				condition.signal();
 			}
+			
+			lock.unlock();
 			break;
 
 		case Protocol.Server.TURN:
-			print("TURN command ontvangen van " + serverName);
-
+			lock.lock();
+			if (game == null || game.getBoard() == null) {
+				// wait till board is made
+				try {
+					condition.await();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			lock.unlock();
+			
 			if (args[2].equals(Protocol.Server.FIRST)) {
 				player.sendMove();
 			} else if (args[2].equals(Protocol.Server.PASS)) {
@@ -144,8 +169,6 @@ public class ServerHandler {
 					}
 				}
 			} else {
-				client.print(args[2]);
-
 				String[] coordinates = args[2].split(Protocol.General.DELIMITER2);
 				int x = Integer.parseInt(coordinates[0]);
 				int y = Integer.parseInt(coordinates[1]);
@@ -165,8 +188,6 @@ public class ServerHandler {
 			break;
 
 		case Protocol.Server.ENDGAME:
-			print("ENDGAME command ontvangen van " + serverName);
-
 			String player1 = args[2];
 			int score1 = Integer.parseInt(args[3]);
 			String player2 = args[4];
@@ -191,29 +212,34 @@ public class ServerHandler {
 			if (args[1].equals(Protocol.Server.FINISHED)) {
 				// Game was finished
 				if (playerScore > opponentScore) {
+					print("");
 					print("Congratulations! You won from " + opponentName + " with " + playerScore + " against " + opponentScore + ".");
 				} else if (opponentScore > playerScore) {
+					print("");
 					print("You lost from " + opponentName + " with " + playerScore + " against " + opponentScore + ".");
 				} else {
+					print("");
 					print("It was a draw. You and " + opponentName + " both scored " + playerScore + " points.");
 				}
 			} else if (args[1].equals(Protocol.Server.ABORTED)) {
+				print("");
 				print("The game was aborted because the server or your opponent has disconnected.");
 				print("You scored " + playerScore + " points this game.");
 			} else if (args[1].equals(Protocol.Server.TIMEOUT)) {
+				print("");
 				print("Someone did not respond in time.");
 				print("You scored " + playerScore + " points this game.");
 			} else {
 				// Should not happen
 			}
 
+			game = null;
+			
 			print("");
 			showMainMenu();
 			break;
 
 		case Protocol.Server.ERROR:
-			print("ERROR command ontvangen van " + serverName);
-
 //			 * format: ERROR <String typeOfError> <String errorMessage>
 //			 * typeOfError can be:
 //			 * 		UNKNOWNCOMMAND
@@ -223,24 +249,29 @@ public class ServerHandler {
 //			 * 		OTHER
 			switch (args[1]) {
 				case Protocol.Server.UNKNOWN:
+					print("");
 					print(args[2]);
 					break;
 					
 				case Protocol.Server.INVALID:
+					print("");
 					print(args[2]);
 					break;
 					
 				case Protocol.Server.NAMETAKEN:
+					print("");
 					print(args[2]);
 					shutDown();
 					break;
 					
 				case Protocol.Server.INCOMPATIBLEPROTOCOL:
+					print("");
 					print(args[2]);
 					shutDown();
 					break;
 					
 				case Protocol.Server.OTHER:
+					print("");
 					print(args[2]);
 					break;
 					
@@ -251,7 +282,6 @@ public class ServerHandler {
 			break;
 
 		default:
-			print("other command ontvangen van " + serverName);
 			print(msg);
 			break;
 		}
@@ -278,6 +308,7 @@ public class ServerHandler {
 	 * Is shown just after the server and client have made a connection.
 	 */
 	public void showMainMenu() {
+		print("");
 		print("What do you want to do?");
 		print("Request a game .............. 1");
 		print("Exit ........................ 2");
@@ -326,6 +357,7 @@ public class ServerHandler {
 	}
 
 	public void sendRequest() {
+		print("");
 		print("Do you want to play yourself or do you want the computer play for you?");
 		print("Play myself ................. 1");
 		print("Let computer play ........... 2");

@@ -2,11 +2,15 @@ package clientController;
 
 public class ServerInputProcessor implements Runnable {
 	
-	public ServerInputProcessor() {
-		
+	private ServerHandler sh;
+	private String message;
+	
+	public ServerInputProcessor(ServerHandler sh, String message) {
+		this.sh = sh;
+		this.message = message;
 	}
 
 	public void run() {
-		
+		sh.processServerInput(message);
 	}
 }

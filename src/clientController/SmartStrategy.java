@@ -20,18 +20,15 @@ public class SmartStrategy implements Strategy {
 	}
 
 	public String sendMove() {		
-		Game game;
-		while ((game = player.getGame()) == null || (game  = player.getGame()).getBoard() == null) {
-			// Wait until the game is made.
-		}
-		
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
+			
+		Game game;
+		game = player.getGame();
 		Board board = game.getBoard();
 		int DIM = board.getDIM();
 
@@ -45,7 +42,7 @@ public class SmartStrategy implements Strategy {
 				return "pass";
 			}
 		}
-
+		
 		// 2) If a group of the other token can be captured, do this
 		Token playerToken = game.getToken();
 		List<Group> groups = board.getGroups();
@@ -73,7 +70,7 @@ public class SmartStrategy implements Strategy {
 				}
 			}
 		}
-
+		
 		// 3) Random, First determine which fields are empty
 		List<Integer> emptyX = new ArrayList<>();
 		List<Integer> emptyY = new ArrayList<>();
