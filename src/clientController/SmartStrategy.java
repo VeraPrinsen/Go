@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
+import boardView.InvalidCoordinateException;
 import model.Board;
 import model.Field;
 import model.Group;
@@ -24,6 +25,13 @@ public class SmartStrategy implements Strategy {
 			// Wait until the game is made.
 		}
 		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		Board board = game.getBoard();
 		int DIM = board.getDIM();
 
@@ -39,17 +47,29 @@ public class SmartStrategy implements Strategy {
 		}
 
 		// 2) If a group of the other token can be captured, do this
+		Token playerToken = game.getToken();
 		List<Group> groups = board.getGroups();
 		for (Group g : groups) {
-			if (g.getToken().equals(game.getToken().other())) {
+			if (g.getToken().equals(playerToken.other())) {
 				List<Field> emptyFields = new ArrayList<>();
 				for (Field p : g.getPerimeter()) {
 					if (p.getToken().equals(Token.EMPTY)) {
 						emptyFields.add(p);
 					}
 				}
+				
 				if (emptyFields.size() == 1) {
-					return emptyFields.get(0).getX() + "_" + emptyFields.get(0).getY();
+					int x = emptyFields.get(0).getX();
+					int y = emptyFields.get(0).getY();
+					
+					try {
+						if (board.checkMove(x, y, playerToken)) {
+							return x + "_" + y;
+						}
+					} catch (InvalidCoordinateException e) {
+						// Is an invalid move
+					}
+				
 				}
 			}
 		}
@@ -61,13 +81,22 @@ public class SmartStrategy implements Strategy {
 		for (int i = 0; i < DIM; i++) {
 			for (int j = 0; j < DIM; j++) {
 				if (board.isEmptyField(i, j)) {
-					emptyX.add(i);
-					emptyY.add(j);
+					try {
+						if (board.checkMove(i, j, playerToken)) {
+							emptyX.add(i);
+							emptyY.add(j);
+						}
+					} catch (InvalidCoordinateException e) {
+						// Is an invalid move
+					}		
 				}
 			}
 		}
-		int index = (int) Math.floor(Math.random() * emptyX.size());
-
-		return emptyX.get(index) + "_" + emptyY.get(index);
+		if (emptyX.size() == 0) {
+			return "pass";
+		} else {
+			int index = (int) Math.floor(Math.random() * emptyX.size());
+			return emptyX.get(index) + "_" + emptyY.get(index);
+		}
 	}
 }

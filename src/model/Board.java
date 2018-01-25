@@ -249,8 +249,9 @@ public class Board {
 		} else {
 			Board nextBoard = boardCopy();
 			nextBoard.setField(x, y, t);
-
-			if (boardsEqual(nextBoard.getFields(), previousBoard)) {
+			Field[] currentBoard = fieldCopy();
+			
+			if (boardsEqual(nextBoard.getFields(), previousBoard) || boardsEqual(nextBoard.getFields(), currentBoard)) {
 				throw new InvalidCoordinateException(
 						"Cannot make a move that will result in a boardstate that has already been there.");
 			}

@@ -16,7 +16,7 @@ public class ServerHandler {
 	public Client client;
 	private BufferedReader in;
 	private BufferedWriter out;
-
+	
 	private ServerInputHandler serverInput;
 	private String serverName;
 	private int serverVersionNo;
@@ -267,11 +267,11 @@ public class ServerHandler {
 	}
 
 	public String readString(String prompt) {
-		return serverInput.readString(prompt);
+		return client.readString(prompt);
 	}
 	
 	public int readInt(String prompt) {
-		return serverInput.readInt(prompt);
+		return client.readInt(prompt);
 	}
 	
 	/**

@@ -73,40 +73,37 @@ public class Client {
 	 * 		Create serverHandler that processes this in- and output
 	 */
 	// TO DO: EXCEPTION HANDLING
-	// TO DO: ASK FOR HOST AND PORT
 	public void start() throws Exception {		
-//		boolean ipOK = false;
-//		InetAddress addr = null;
-//		
-//		while (!ipOK) {
-//			String ipAddress = readString("Enter IP address of the Server host");
-//			
-//			try {
-//	            addr = InetAddress.getByName(ipAddress);
-//	            ipOK = true;
-//	        } catch (UnknownHostException e) {
-//	            print("ERROR: host " + ipAddress + " unknown.");
-//	        }
-//		}
-//		
-//		boolean portOK = false;
-//		int port = 0;
-//		
-//		while (!portOK) {
-//			try {
-//				port = readInt("To what portnumber you want to connect to?");
-//				print("");
-//				print("Trying to connect to the server.");
-//				sock = new Socket(addr, port);
-//				print("Connected to server.");
-//				print("");
-//				portOK = true;
-//			} catch (Exception e) {
-//				print("There is nothing to connect to on port " + port + ". Try another port.");
-//			}
-//
-//		}
-		sock = new Socket("localhost", 5678);
+		boolean ipOK = false;
+		InetAddress addr = null;
+		
+		while (!ipOK) {
+			String ipAddress = readString("Enter IP address of the Server host");
+			
+			try {
+	            addr = InetAddress.getByName(ipAddress);
+	            ipOK = true;
+	        } catch (UnknownHostException e) {
+	            print("ERROR: host " + ipAddress + " unknown.");
+	        }
+		}
+		
+		boolean portOK = false;
+		int port = 0;
+		
+		while (!portOK) {
+			try {
+				port = readInt("To what portnumber you want to connect to?");
+				print("");
+				print("Trying to connect to the server.");
+				sock = new Socket(addr, port);
+				print("Connected to server.");
+				print("");
+				portOK = true;
+			} catch (Exception e) {
+				print("There is nothing to connect to on port " + port + ". Try another port.");
+			}
+		}
 		
 		// First: Ask for name
 		clientName = readString("What is your name?");
@@ -132,21 +129,18 @@ public class Client {
 	 * This method is used when the client must be shut down.
 	 */
 	// TO DO: EXCEPTION HANDLING
+	// TO DO: IMPLEMENT
 	public void shutDown() {
-		sh.sendQuit();
-		
-//		if (game != null) {
-//			
+//		sh.sendQuit();
+//		
+//		sh.shutDown();
+//		tui.shutDown();		
+//		
+//		try {
+//			sock.close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
 //		}
-		
-		sh.shutDown();
-		tui.shutDown();		
-		
-		try {
-			sock.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	/**
