@@ -15,8 +15,7 @@ public class Board {
 
 	private final int DIM;
 	private Field[] board;
-	private Field[] previousBoard1;
-	private Field[] previousBoard2;
+	private Field[] previousBoard;
 	private List<Group> groups;
 
 	private boolean useGUI;
@@ -25,20 +24,14 @@ public class Board {
 	public Board(int DIM, boolean useGUI) {
 		this.DIM = DIM;
 		this.board = new Field[DIM * DIM];
-		previousBoard1 = null;
-		previousBoard2 = null;
+		previousBoard = null;
 		this.useGUI = useGUI;
 		if (useGUI) {
 			this.gui = new GoGUIIntegrator(false, false, DIM);
 		}
 		this.groups = new ArrayList<>();
 
-		try {
-			this.reset();
-		} catch (InvalidCoordinateException e) {
-			e.printStackTrace();
-		}
-
+		this.reset();
 	}
 
 	// RESETTERS & UPDATERS
@@ -47,7 +40,7 @@ public class Board {
 	 * Resets the board to all empty spaces. And assigns the neighbors to all the
 	 * fields.
 	 */
-	public void reset() throws InvalidCoordinateException {
+	private void reset() {
 		// Create a field for each location
 		for (int i = 0; i < DIM; i++) {
 			for (int j = 0; j < DIM; j++) {
@@ -75,14 +68,20 @@ public class Board {
 
 		if (useGUI) {
 			gui.startGUI();
-			gui.setBoardSize(DIM);
+			try {
+				gui.setBoardSize(DIM);
+			} catch (InvalidCoordinateException e) {
+				// Should not happen because it only resets the boardSize, it has nothing to do
+				// with coordinates on the board...
+				e.printStackTrace();
+			}
 		}
 	}
-	
+
 	/**
 	 * If a change is made to the board, update all information.
 	 */
-	public void update(Token t) {
+	private void update(Token t) {
 		// update after a change is done to the board
 		makeGroups();
 		// 6) Determine the perimeter (can be a new method)
@@ -97,7 +96,7 @@ public class Board {
 	/**
 	 * For each group on the board, the perimeter must be determined.
 	 */
-	public void updatePerimeters() {
+	private void updatePerimeters() {
 		// For each group, update the perimeter
 		for (Group g : groups) {
 			g.updatePerimeter();
@@ -109,30 +108,30 @@ public class Board {
 	public int getDIM() {
 		return this.DIM;
 	}
-	
+
 	public Field[] getFields() {
 		return board;
 	}
-	
+
 	public List<Group> getGroups() {
 		return groups;
 	}
-	
+
 	public int getScore(Token t) {
-		int score  = 0;
-		
+		int score = 0;
+
 		for (Group g : groups) {
 			if (g.getToken().equals(Token.EMPTY) && g.isCaptured(t)) {
 				score = score + g.size();
 			}
 		}
-		
-		for (Field f : board) { 
+
+		for (Field f : board) {
 			if (f.getToken().equals(t)) {
 				score++;
 			}
 		}
-		
+
 		return score;
 	}
 
@@ -141,18 +140,18 @@ public class Board {
 	/**
 	 * Make a copy of the whole Board class.
 	 */
-	public Board boardCopy() {
+	private Board boardCopy() {
 		Board newboard = new Board(DIM, false);
 		for (int i = 0; i < board.length; i++) {
 			newboard.setField(i, board[i].getToken());
 		}
 		return newboard;
 	}
-	
+
 	/**
 	 * Makes a copy of the current Field[] board.
 	 */
-	public Field[] fieldCopy() {
+	private Field[] fieldCopy() {
 		Field[] newfield = new Field[board.length];
 		for (int i = 0; i < board.length; i++) {
 			newfield[i] = new Field(board[i].getX(), board[i].getY());
@@ -191,8 +190,7 @@ public class Board {
 	 * update the boardinformation through update().
 	 */
 	private void setField(int i, Token t) {
-		previousBoard2 = previousBoard1;
-		previousBoard1 = fieldCopy();
+		previousBoard = fieldCopy();
 		board[i].setToken(t);
 		update(t);
 	}
@@ -201,6 +199,7 @@ public class Board {
 	 * Put a token on field (x, y). This is the method that is called from the Game
 	 * Controllers.
 	 */
+	// TO DO: EXCEPTION HANDLING
 	public void setField(int x, int y, Token t) {
 		try {
 			if (useGUI) {
@@ -219,6 +218,27 @@ public class Board {
 
 	}
 
+	/**
+	 * Adds the hint indicator to the board.
+	 */
+	// TO DO: EXCEPTION HANDLING
+	public void setHintField(int x, int y) {
+		try {
+			if (useGUI) {
+				gui.addHintIndicator(x, y);
+			}
+		} catch (InvalidCoordinateException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Removes the hint indicator from the board.
+	 */
+	public void removeHintField() {
+		gui.removeHintIdicator();
+	}
+
 	// CHECKS
 	// ===================================================================================
 	public boolean checkMove(int x, int y, Token t) throws InvalidCoordinateException {
@@ -229,35 +249,35 @@ public class Board {
 		} else {
 			Board nextBoard = boardCopy();
 			nextBoard.setField(x, y, t);
-			
-			if (boardsEqual(nextBoard.getFields(), previousBoard1) || boardsEqual(nextBoard.getFields(), previousBoard2)) {
-				throw new InvalidCoordinateException("Cannot make a move that will result in a boardstate that has already been there.");
+
+			if (boardsEqual(nextBoard.getFields(), previousBoard)) {
+				throw new InvalidCoordinateException(
+						"Cannot make a move that will result in a boardstate that has already been there.");
 			}
 		}
 
 		return true;
 	}
-	
-	//@ requires board1.length == board2.length
-	public boolean boardsEqual(Field[] board1, Field[] board2) {
+
+	// @ requires board1.length == board2.length
+	private boolean boardsEqual(Field[] board1, Field[] board2) {
 		if (board1 != null && board2 != null) {
 			for (int i = 0; i < board1.length; i++) {
 				Field f1 = board1[i];
 				Field f2 = board2[i];
-				
-				System.out.println(i + ": " + f1.getToken() + " / " + f2.getToken());
+
 				if (!f1.getToken().equals(f2.getToken())) {
 					return false;
 				}
 			}
-			
+
 			return true;
 		}
-		
+
 		return false;
 	}
-	
-	public boolean isField(int index) {
+
+	private boolean isField(int index) {
 		return (index < (DIM * DIM)) && (index >= 0);
 	}
 
@@ -265,25 +285,22 @@ public class Board {
 		return isField(index(x, y));
 	}
 
-	public boolean isEmptyField(int i) {
+	private boolean isEmptyField(int i) {
 		return getField(i) == Token.EMPTY;
 	}
 
 	public boolean isEmptyField(int x, int y) {
 		return isEmptyField(index(x, y));
 	}
-	
-	
 
 	/**
-	 * Check for all groups, if a group is captured.
+	 * Check for all groups, if a group is captured by the given argument token.
 	 */
-	// TO DO: FIRST CHECK ALL THE GROUPS OF THE OPPONENT
-	public void checkCaptured(Token token) {
+	private void checkCaptured(Token token) {
 		// this should be done every time the board changes, right after makeGroups()
 
 		Token[] tokenArray = {token.other(), token};
-		
+
 		for (Token currentToken : tokenArray) {
 			for (Group g : groups) {
 				boolean isCaptured = true;
@@ -302,27 +319,16 @@ public class Board {
 					// 3) If each location of the perimeter is occupied by the other color, the
 					// group is captured and removed from the board.
 					if (isCaptured) {
-						System.out.println("Group " + t.toString() + " is captured");
 						removeGroup(g);
 					}
 				}
 			}
-		}		
-	}
-
-	// @ requires gameOver()
-	public boolean isWinner(Token t) {
-		return false;
-	}
-
-	//@ requires this.passes > 1
-	public void gameOver() {
-		// Observer, Observable????
+		}
 	}
 
 	// MAKE & CHANGE GROUPS
 	// ==================================================================================
-	public void makeGroups() {
+	private void makeGroups() {
 		// this should be done every time the board changes
 		groups.clear();
 
@@ -351,7 +357,7 @@ public class Board {
 
 	// If a field is added to a group, look at the 4 adjacent neighbors and look if
 	// they have the same token.
-	public void addToGroup(int groupIndex, int fieldIndex) {
+	private void addToGroup(int groupIndex, int fieldIndex) {
 		// Group group = groups.get(groupIndex);
 		groups.get(groupIndex).add(board[fieldIndex]);
 
@@ -368,7 +374,7 @@ public class Board {
 		}
 	}
 
-	public void removeGroup(Group g) {
+	private void removeGroup(Group g) {
 		// Change all tokens in the group to empty and also change the group to an empty
 		// group. This group then becomes the territory of the color that captured this
 		// group.

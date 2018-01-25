@@ -3,7 +3,6 @@ package netView;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Scanner;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -16,17 +15,16 @@ import general.Protocol;
  * @author vera.prinsen
  *
  */
-public class ClientTUI implements Runnable {
+public class ClientTUI2 implements Runnable {
 
 	private Client client;
-	private Scanner in;
+	private BufferedReader in;
 	private boolean isOpen;
-	private Thread readThread;
-	private String msg;
+	private Lock exitLock = new ReentrantLock();
 
-	public ClientTUI(Client client) {
+	public ClientTUI2(Client client) {
 		this.client = client;
-		in = new Scanner(System.in);
+		in = new BufferedReader(new InputStreamReader(System.in));
 		isOpen = true;
 	}
 
@@ -34,13 +32,14 @@ public class ClientTUI implements Runnable {
 	public void run() {
 		String msg;
 		try {
-			while (isOpen && in.hasNext()) {
-				msg = in.nextLine();
+			while (isOpen && (msg = in.readLine()) != null) {
+				// exitLock.unlock();
 				if (msg.equalsIgnoreCase("exit")) {
 					client.shutDown();
 				} else {
 					client.processClientInput(msg);
 				}
+				// exitLock.lock();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -53,7 +52,11 @@ public class ClientTUI implements Runnable {
 
 	public void shutDown() {
 		isOpen = false;
-		in.close();
+		try {
+			in.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -61,47 +64,41 @@ public class ClientTUI implements Runnable {
 	 */
 	// TO DO: EXCEPTION HANDLING
 	public String readString(String prompt) {
-		readThread = new Thread(new Runnable() {
-			public void run() {
-				System.out.print(prompt + ": ");
-				if (in.hasNext()) {
-					msg = in.nextLine();
-				}
-				
-			}
-		});	
-		
-		readThread.start();
+		// exitLock.unlock();
+		String msg;
 		try {
-			readThread.join();
-		} catch (InterruptedException e) {
+			System.out.print(prompt + ": ");
+			if ((msg = in.readLine()).equalsIgnoreCase("exit")) {
+				client.shutDown();
+				return Protocol.Client.QUIT;
+			} else {
+				return msg;
+			}
+		} catch (IOException e) {
 			e.printStackTrace();
-		}
-		
-		if (msg.equalsIgnoreCase("exit")) {
-			client.shutDown();
 			return Protocol.Client.QUIT;
-		} else {
-			return msg;
+		} finally {
+			// exitLock.lock();
 		}
 	}
-	
+
 	/**
 	 * Method reads an integer from the input console.
 	 */
 	public int readInt(String prompt) {
+		// exitLock.unlock();
 		boolean inputOK = false;
 		int input = 0;
-
+		
 		while (!inputOK) {
 			try {
 				input = Integer.parseInt(readString(prompt));
-				inputOK = true;
 			} catch (NumberFormatException e) {
 				print("Input must be an integer.");
 			}
 		}
-
-		return input;
+		
+		return input; 
+		// exitLock.lock();
 	}
 }

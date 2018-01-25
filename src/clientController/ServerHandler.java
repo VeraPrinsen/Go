@@ -85,13 +85,8 @@ public class ServerHandler {
 	public void processServerInput(String msg) {
 		String[] args = msg.split("\\" + Protocol.General.DELIMITER1);
 
-		client.print(msg);
-		client.print(args[0]);
-
 		switch (args[0]) {
 		case Protocol.Server.NAME:
-			print("NAME command ontvangen");
-
 			serverName = args[1];
 			serverVersionNo = Integer.parseInt(args[3]);
 			serverExtensions[0] = Integer.parseInt(args[5]);
@@ -102,7 +97,6 @@ public class ServerHandler {
 			serverExtensions[5] = Integer.parseInt(args[10]);
 			serverExtensions[6] = Integer.parseInt(args[11]);
 
-			print("Connected to " + serverName);
 			showMainMenu();
 			break;
 
@@ -272,6 +266,14 @@ public class ServerHandler {
 		client.print(msg);
 	}
 
+	public String readString(String prompt) {
+		return serverInput.readString(prompt);
+	}
+	
+	public int readInt(String prompt) {
+		return serverInput.readInt(prompt);
+	}
+	
 	/**
 	 * Is shown just after the server and client have made a connection.
 	 */

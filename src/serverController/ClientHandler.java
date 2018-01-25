@@ -20,6 +20,7 @@ public class ClientHandler {
 	private BufferedWriter out;
 
 	private ClientInputHandler clientInput;
+	private Thread inputThread;
 	private String clientName;
 	private int clientVersionNo;
 	private int[] clientExtensions;
@@ -48,20 +49,30 @@ public class ClientHandler {
 	public void run() {
 		clientInput = new ClientInputHandler(this, in);
 
-		Thread inputThread = new Thread(clientInput, "ClientInput");
+		inputThread = new Thread(clientInput, "ClientInput");
 		inputThread.start();
 
 		sendVersion();
 	}
 
 	public void shutDown() {
-		//clientInput.shutDown();
+//		clientInput.shutDown();
+//		try {
+//			inputThread.join();
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
+		
+		print("ch.check1");
+		
 		try {
 			in.close();
 			out.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		print("ch.check2");
 	}
 
 	// GETTERS & SETTERS ========================================================================
@@ -141,10 +152,13 @@ public class ClientHandler {
 			game.setBoard(boardSize, false);
 			game.setColors(this, colorString);
 			game.sendStart();
+			game.startGame();
 			break;
 
 		case Protocol.Client.MOVE:
-			if ((game != null) || (game.getCurrentPlayer() != playerNo)) {
+			if (!((game == null) || (game.getCurrentPlayer() != playerNo))) {
+				
+				
 				if (args[1].equals(Protocol.Client.PASS)) {
 					game.makePass(playerNo);
 					
@@ -170,7 +184,7 @@ public class ClientHandler {
 					
 				}
 			} else {
-				if (game != null) {
+				if (game == null) {
 					sendError(Protocol.Server.INVALID, "A game has not started yet.");
 				} else if (game.getCurrentPlayer() != playerNo) {
 					sendError(Protocol.Server.INVALID, "It is not your turn.");
@@ -279,6 +293,7 @@ public class ClientHandler {
 	 * format: TURN <String firstPlayer> FIRST <String firstPlayer>
 	 */
 	public void sendFirst() {
+		
 		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1
 				+ Protocol.Server.FIRST + Protocol.General.DELIMITER1 + clientName;
 		send(message);
@@ -333,6 +348,8 @@ public class ClientHandler {
 	 * 		- TIMEOUT (the currentPlayer did not make a move within the TIMEOUT time).
 	 */
 	public void sendEndGame(String reason) {
+		
+		
 		int scorePlayer = game.score(playerNo);
 		int scoreOpponent = game.score(Math.abs(playerNo - 1));
 		game = null;

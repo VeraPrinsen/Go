@@ -9,16 +9,17 @@ import model.*;
  * @author vera.prinsen
  *
  */
-public class GameController implements Runnable {
+public class GameController {
 
 	private int numberPlayers = 2;
 	private ClientHandler[] players;
 	private String[] playerColor;
 	private Token[] playerToken;
 	private int currentPlayer = -1;
-	
+	private long startTime;
 	private Board board;
 	private int passes;
+	private boolean isRunning;
 	
 	public GameController(ClientHandler ch1, ClientHandler ch2) {
 		this.players = new ClientHandler[numberPlayers];
@@ -26,19 +27,41 @@ public class GameController implements Runnable {
 		this.playerToken = new Token[numberPlayers];
 		this.players[0] = ch1;
 		this.players[1] = ch2;
+		isRunning = true;
 	}
 	
 	// STARTERS & STOPPERS ==========================================================
 	/**
 	 * Before a game can start, both players have the game added to their clientHandler and the first player must choose a color and the boardsize.
 	 */
-	public void run() {
+	public void setup() {
 		// Make a game for both clientHandler on this server
 		players[0].startGame(this, 0, players[1]);
 		players[1].startGame(this, 1 , players[0]);
 		
 		// Send the first player the START command and request color and boardsize
 		players[0].sendRequestSettings();
+	}
+	
+	public void startGame() {
+		new Thread(new Runnable() { 
+			public void run() {
+				while (isRunning) {
+					System.out.print("check");
+					if ((System.currentTimeMillis() - startTime)/1000 > Protocol.General.TIMEOUTSECONDS) {
+						sendEnd(Protocol.Server.TIMEOUT);
+					}
+				}
+			} 
+		});
+	}
+	
+	public void shutDown() {
+		isRunning = false;
+	}
+	
+	public void setTime() {
+		startTime = System.currentTimeMillis();
 	}
 	
 	// GETTERS & SETTERS ==============================================================
@@ -96,6 +119,10 @@ public class GameController implements Runnable {
 	 */
 	public int getCurrentPlayer() {
 		return this.currentPlayer;
+	}
+	
+	public ClientHandler getPlayer(int playerNo) {
+		return players[playerNo];
 	}
 	
 	// GAME MECHANICS =================================================================

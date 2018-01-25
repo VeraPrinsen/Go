@@ -2,6 +2,9 @@ package clientController;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import model.*;
 
@@ -9,33 +12,30 @@ public class ComputerPlayer implements Player {
 
 	private ServerHandler sh;
 	private Game game;
-	
+	private Strategy strategy;
+
 	public ComputerPlayer(ServerHandler sh) {
 		this.sh = sh;
+		strategy = new SmartStrategy(this);
 	}
-	
+
 	public void setGame(Game game) {
 		this.game = game;
 	}
 	
+	public Game getGame() {
+		return this.game;
+	}
+
 	public void sendMove() {
-		Board board = game.getBoard();
-		int DIM = board.getDIM();
+		String move = strategy.sendMove();
 		
-		List<Integer> emptyX = new ArrayList<>();
-		List<Integer> emptyY = new ArrayList<>();
-		
-		for (int i = 0; i < DIM; i++) {
-			for (int j = 0; j < DIM; j++) {
-				if (board.isEmptyField(i, j)) {
-					emptyX.add(i);
-					emptyY.add(j);
-				}
-			}
+		if (move.equalsIgnoreCase("pass")) {
+			game.sendPass();
+		} else {
+			String[] coords = move.split("_");
+			game.sendMove(Integer.parseInt(coords[0]), Integer.parseInt(coords[1]));
 		}
-	
-		int index = (int) Math.floor(Math.random() * emptyX.size());
 		
-		game.sendMove(emptyX.get(index), emptyY.get(index));
 	}
 }

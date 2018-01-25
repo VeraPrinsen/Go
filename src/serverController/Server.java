@@ -14,7 +14,9 @@ import java.io.OutputStreamWriter;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.io.IOException;
 import java.net.SocketException;
 
@@ -29,15 +31,19 @@ public class Server {
 	private String serverName;
 	private ServerTUI tui;
 	private GameServer gameServer;
-
+	private Thread tuiThread;
+	private Thread gameThread;
+	
 	private List<ClientHandler> clients;
-
+	private boolean isRunning;
+	
 	public Server() {
 		serverName = "ServerVera";
 		tui = new ServerTUI(this);
 		gameServer = new GameServer(this);
 
 		clients = new ArrayList<>();
+		isRunning = true;
 	}
 
 	// START UP AND SHUTDOWN OF THE SERVER
@@ -68,50 +74,79 @@ public class Server {
 
 		}
 
-		Thread tuiThread = new Thread(tui, "ServerTUI");
-		Thread gameThread = new Thread(gameServer, "GameServer");
+		tuiThread = new Thread(tui, "ServerTUI");
+		gameThread = new Thread(gameServer, "GameServer");
 		tuiThread.start();
 		gameThread.start();
 
-		try {
-			while (true) {
-				Socket sock = ssock.accept();
-				BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-				BufferedWriter out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
-				ClientHandler ch = new ClientHandler(this, in, out);
-				clients.add(ch);
+		Thread listener = new Thread(new Runnable() {
+			public void run() {
+				try {
+					while (isRunning) {
+						Socket sock = ssock.accept();
+						BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+						BufferedWriter out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
+						ClientHandler ch = new ClientHandler(Server.this, in, out);
+						clients.add(ch);
+					}
+					print("While loop stopped.");
+				} catch (SocketException e) {
+					print("Server is closed.");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				
+				print("Server closed.");
 			}
-		} catch (SocketException e) {
-			print("Server is closed.");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		});
+		
+		listener.setDaemon(true);
+		listener.start();		
 	}
 
 	/**
 	 * Shuts the server down.
 	 */
 	public void shutDown() {
-
-		print("check4");
+		// Prevent other clients from connecting
+		isRunning = false;
+		
+		print("check1");
+		
+		List<GameController> games = gameServer.getGames();
+		for (GameController gc : games) {
+			gc.sendEnd(Protocol.Server.ABORTED);
+			gc.shutDown();
+		}
+		
+		print("check2");
+		
 		for (ClientHandler ch : clients) {
-			if (ch.getGame() != null && ch.getGame().getBoard() != null) {
-				ch.sendEndGame(Protocol.Server.ABORTED);
-			}
-			print("check5");
 			ch.shutDown();
-			print("check6");
 		}
 
+		print("check3");
+		
+		gameServer.shutDown();
+		
+//		try {
+//			gameThread.join();
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
+		
+		print("check4");
+		
 		print("GoodBye!");
 		tui.shutDown();
-		gameServer.shutDown();
-
+		
 		try {
 			ssock.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		print("Server is reallly!!! closed now.");
 	}
 
 	/**
@@ -138,7 +173,6 @@ public class Server {
 	 */
 	public void processServerInput(String msg) {
 		if (msg.equalsIgnoreCase("exit")) {
-			print("check3");
 			shutDown();
 		} else {
 			print(msg);

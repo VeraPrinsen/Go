@@ -46,6 +46,14 @@ public class Game {
 	public Board getBoard() {
 		return this.board;
 	}
+	
+	public Token getToken() {
+		return this.token;
+	}
+	
+	public int getPasses() {
+		return this.passes;
+	}
 
 	// PRINTERS & SENDERS =========================================================================
 	public void print(String msg) {

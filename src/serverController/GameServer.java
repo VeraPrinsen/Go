@@ -15,6 +15,7 @@ public class GameServer implements Runnable {
 	
 	private Server server;
 	private List<ClientHandler> lobby;
+	private List<GameController> games;
 	private Lock lock = new ReentrantLock();
 	private Condition lobbyCondition = lock.newCondition();
 	private boolean isRunning;
@@ -22,7 +23,12 @@ public class GameServer implements Runnable {
 	public GameServer(Server server) {
 		this.server = server;
 		lobby = new ArrayList<>();
+		games = new ArrayList<>();
 		isRunning = true;
+	}
+	
+	public List<GameController> getGames() {
+		return this.games;
 	}
 	
 	/**
@@ -63,7 +69,9 @@ public class GameServer implements Runnable {
 					ClientHandler player2 = lobby.get(1);
 					removeFromLobby(player1);
 					removeFromLobby(player2);
-					new Thread((new GameController(player1, player2)), "Game with " + player1.getName() + " and " + player2.getName()).start();
+					GameController newgame = new GameController(player1, player2);
+					games.add(newgame);
+					newgame.setup();
 				}
 			} else {
 				try {
@@ -75,9 +83,13 @@ public class GameServer implements Runnable {
 			}
 			lock.unlock();
 		}
+		server.print("GameServer closed.");
 	}
 	
 	public void shutDown() {
+		lock.lock();
 		isRunning = false;
+		lobbyCondition.signal();
+		lock.unlock();
 	}
 }

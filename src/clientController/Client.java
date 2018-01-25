@@ -8,7 +8,11 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.BindException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -71,21 +75,57 @@ public class Client {
 	// TO DO: EXCEPTION HANDLING
 	// TO DO: ASK FOR HOST AND PORT
 	public void start() throws Exception {		
+//		boolean ipOK = false;
+//		InetAddress addr = null;
+//		
+//		while (!ipOK) {
+//			String ipAddress = readString("Enter IP address of the Server host");
+//			
+//			try {
+//	            addr = InetAddress.getByName(ipAddress);
+//	            ipOK = true;
+//	        } catch (UnknownHostException e) {
+//	            print("ERROR: host " + ipAddress + " unknown.");
+//	        }
+//		}
+//		
+//		boolean portOK = false;
+//		int port = 0;
+//		
+//		while (!portOK) {
+//			try {
+//				port = readInt("To what portnumber you want to connect to?");
+//				print("");
+//				print("Trying to connect to the server.");
+//				sock = new Socket(addr, port);
+//				print("Connected to server.");
+//				print("");
+//				portOK = true;
+//			} catch (Exception e) {
+//				print("There is nothing to connect to on port " + port + ". Try another port.");
+//			}
+//
+//		}
+		sock = new Socket("localhost", 5678);
+		
 		// First: Ask for name
 		clientName = readString("What is your name?");
-		print("Welcome " + clientName + "!");
+		print("");
 		
-		System.out.println("Trying to connect to the server.");
-		sock = new Socket("localhost", 4567);
-		System.out.println("Connected to server.");
+		print("-----------------------");
+		print("|     o-o   o-o       |");
+		print("|     o     o   o     |");
+		print("|     |  -o |   |     |");
+		print("|     o   | o   o     |");
+		print("|      o-o   o-o      |");
+		print("-----------------------");
+		
+		print("Welcome " + clientName + "!");
 		
 		in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 		out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
 		
 		sh = new ServerHandler(this, in, out);
-		//Thread threadTUI = new Thread(tui);
-		//threadTUI.setPriority(Thread.MIN_PRIORITY);
-		//threadTUI.start();
 	}
 	
 	/**

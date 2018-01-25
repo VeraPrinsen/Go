@@ -32,15 +32,15 @@ public class ServerTUI implements Runnable {
 	public void run() {
 		String msg;
 		try {
-			print("check1");
 			while (isOpen && (msg = in.readLine()) != null) {
-				print("check2");
 				server.processServerInput(msg);
 			}
 		} catch (IOException e) {
 			// WHAT KIND OF EXCEPTION WILL THIS BE?
 			e.printStackTrace();
 		}
+		
+		print("ServerTUI closed.");
 	}
 
 	// INPUT

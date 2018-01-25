@@ -43,6 +43,9 @@ public class Group {
 		}
 	}
 	
+	/**
+	 * Checks if the group is captured by Token t.
+	 */
 	public boolean isCaptured(Token t) {
 		boolean isCaptured = true;
 		for (Field f : perimeterFields) {

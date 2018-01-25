@@ -1,41 +1,84 @@
 package clientController;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import general.Protocol;
 
 public class HumanPlayer implements Player {
 
 	private ServerHandler sh;
 	private Game game;
+	private Strategy hintStrategy;
 	
 	public HumanPlayer(ServerHandler sh) {
 		this.sh = sh;
 		game = null;
+		hintStrategy = new SmartStrategy(this);
 	}
 	
 	public void setGame(Game game) {
 		this.game = game;
 	}
 	
+	public Game getGame() {
+		return this.game;
+	}
+	
 	public void sendMove() {
-		String x = sh.client.readString("On what row you want to place your stone?");
+		// First let the hint functionality show a spot to place the stone
+		String hintMove = hintStrategy.sendMove();
 		
-		if (x.equals(Protocol.Client.QUIT)) {
-			return;
-		} else if (x.equalsIgnoreCase("pass")) {
-			game.sendPass();
-			return;
+		if (hintMove.equalsIgnoreCase("pass")) {
+			sh.print("The hint is to pass this round.");
+		} else {
+			String[] coords = hintMove.split("_");
+			game.getBoard().setHintField(Integer.parseInt(coords[0]), Integer.parseInt(coords[1]));
 		}
 		
-		String y = sh.client.readString("On what column do you want to place your stone?");
-		
-		if (y.equals(Protocol.Client.QUIT)) {
-			return;
-		} else if (y.equalsIgnoreCase("pass")) {
-			game.sendPass();
-			return;
+		boolean xOK = false;
+		int x = 0;
+		while (!xOK) {
+			String xString = sh.readString("On what row you want to place your stone?");
+			
+			if (xString.equals(Protocol.Client.QUIT)) {
+				return;
+			} else if (xString.equalsIgnoreCase("pass")) {
+				game.sendPass();
+				return;
+			} else {
+				try {
+					x = Integer.parseInt(xString);
+					xOK = true;
+				} catch (NumberFormatException e) {
+					sh.print("You must either pass or enter an integer.");
+				}
+			}
 		}
 		
-		game.sendMove(Integer.parseInt(x), Integer.parseInt(y));
+		boolean yOK = false;
+		int y = 0;
+		while (!yOK) {
+			String yString = sh.readString("On what column do you want to place your stone?");
+			
+			if (yString.equals(Protocol.Client.QUIT)) {
+				return;
+			} else if (yString.equalsIgnoreCase("pass")) {
+				game.sendPass();
+				return;
+			} else {
+				try {
+					y = Integer.parseInt(yString);
+					yOK = true;
+				} catch (NumberFormatException e) {
+					sh.print("You must either pass or enter an integer.");
+				}
+			}
+		}
+		
+		game.getBoard().removeHintField();
+		game.sendMove(x, y);
 	}
 	
 }

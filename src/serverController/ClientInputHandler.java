@@ -6,7 +6,9 @@ import java.io.IOException;
 import general.Protocol;
 
 /**
- * The ClientInputHandler handles all the input that the server gets from this specific client.
+ * The ClientInputHandler handles all the input that the server gets from this
+ * specific client.
+ * 
  * @author vera.prinsen
  *
  */
@@ -15,13 +17,13 @@ public class ClientInputHandler implements Runnable {
 	private BufferedReader in;
 	private ClientHandler ch;
 	private boolean isOpen;
-	
+
 	public ClientInputHandler(ClientHandler ch, BufferedReader in) {
 		this.ch = ch;
 		this.in = in;
 		isOpen = true;
 	}
-	
+
 	/**
 	 * This checks the input stream from the client to the server constantly.
 	 */
@@ -37,18 +39,16 @@ public class ClientInputHandler implements Runnable {
 		} catch (IOException e) {
 			ch.print("CLIENTINPUT IOEXCEPTION");
 		}
-		
+
 		// NOG EVEN NAAAR KIJKEN OF DIT GOED IS
-		try {
-			if (in.readLine() == null) {
-				ch.getOpponent().sendEndGame(Protocol.Server.ABORTED);
-				ch.shutDown();
-			}
-		} catch (IOException e) {
+		if (isOpen) {
+			ch.getGame().sendEnd(Protocol.Server.ABORTED);
 			ch.shutDown();
 		}
+		
+		ch.print("ClientInputHandler closed.");
 	}
-	
+
 	public void shutDown() {
 		try {
 			isOpen = false;
