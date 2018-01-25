@@ -20,12 +20,12 @@ public class SmartStrategy implements Strategy {
 	}
 
 	public String sendMove() {		
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+//		try {
+//			Thread.sleep(1000);
+//		} catch (InterruptedException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
 			
 		Game game;
 		game = player.getGame();

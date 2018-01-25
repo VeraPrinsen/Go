@@ -3,6 +3,7 @@ package serverController;
 import java.io.BufferedReader;
 import java.io.IOException;
 
+import clientController.ServerInputProcessor;
 import general.Protocol;
 
 /**
@@ -32,7 +33,9 @@ public class ClientInputHandler implements Runnable {
 		String msg;
 		try {
 			while (isOpen && (msg = in.readLine()) != null) {
-				ch.processClientInput(msg);
+				Thread newInput = new Thread(new ClientInputProcessor(ch, msg));
+				newInput.setDaemon(true);
+				newInput.start();
 			}
 			ch.print("CLIENTINPUT OUT OF WHILE LOOP");
 			// If the client disconnects, the loop will terminate and will end up here.

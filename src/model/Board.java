@@ -15,7 +15,7 @@ public class Board {
 
 	private final int DIM;
 	private Field[] board;
-	private Field[] previousBoard;
+	private Set<String> previousBoards;
 	private List<Group> groups;
 
 	private boolean useGUI;
@@ -24,12 +24,12 @@ public class Board {
 	public Board(int DIM, boolean useGUI) {
 		this.DIM = DIM;
 		this.board = new Field[DIM * DIM];
-		previousBoard = null;
 		this.useGUI = useGUI;
 		if (useGUI) {
 			this.gui = new GoGUIIntegrator(false, false, DIM);
 		}
 		this.groups = new ArrayList<>();
+		this.previousBoards = new HashSet<>();
 
 		this.reset();
 	}
@@ -66,7 +66,7 @@ public class Board {
 
 		update(Token.EMPTY);
 
-		if (useGUI) {
+		if (useGUI) {		
 			gui.startGUI();
 			try {
 				gui.setBoardSize(DIM);
@@ -159,6 +159,14 @@ public class Board {
 		}
 		return newfield;
 	}
+	
+	private String fieldString() {
+		String s = "";
+		for (Field f : board) {
+			s = s + f.getToken();
+		}
+		return s;
+	}
 
 	// INDEXERS
 	// ===========================================================================
@@ -190,7 +198,6 @@ public class Board {
 	 * update the boardinformation through update().
 	 */
 	private void setField(int i, Token t) {
-		previousBoard = fieldCopy();
 		board[i].setToken(t);
 		update(t);
 	}
@@ -211,6 +218,7 @@ public class Board {
 					// Cannot set an empty stone
 				}
 			}
+			previousBoards.add(fieldString());
 			setField(index(x, y), t);
 		} catch (InvalidCoordinateException e) {
 			e.printStackTrace();
@@ -248,12 +256,9 @@ public class Board {
 			throw new InvalidCoordinateException("The field on the board is not empty.");
 		} else {
 			Board nextBoard = boardCopy();
-			nextBoard.setField(x, y, t);
-			Field[] currentBoard = fieldCopy();
-			
-			if (boardsEqual(nextBoard.getFields(), previousBoard) || boardsEqual(nextBoard.getFields(), currentBoard)) {
-				throw new InvalidCoordinateException(
-						"Cannot make a move that will result in a boardstate that has already been there.");
+			nextBoard.setField(index(x, y), t);
+			if (previousBoards.contains(nextBoard.fieldString())) {
+				throw new InvalidCoordinateException("Cannot make a move that will result in a boardstate that has already been there.");
 			}
 		}
 

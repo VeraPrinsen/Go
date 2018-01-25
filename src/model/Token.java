@@ -16,9 +16,9 @@ public enum Token {
 	
 	public String toString() {
 		if (this.equals(Token.BLACK)) {
-			return "W";
-		} else if (this.equals(Token.WHITE)) {
 			return "B";
+		} else if (this.equals(Token.WHITE)) {
+			return "W";
 		} else {
 			return "E";
 		}

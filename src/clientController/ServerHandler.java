@@ -63,7 +63,7 @@ public class ServerHandler {
 	}
 
 	public void shutDown() {
-		
+		serverInput.shutDown();
 		
 		try {
 			sock.close();
@@ -72,6 +72,8 @@ public class ServerHandler {
 		} catch (IOException e) {
 			print("IOException occured.");
 		}
+		
+		System.exit(0);
 	}
 
 	// GETTERS & SETTERS
@@ -319,7 +321,7 @@ public class ServerHandler {
 			if (option == 1) {
 				sendRequest();
 				optionOK = true;
-			} else if (option == 2) {
+			} else if (option == 2 || option == -1) {
 				// EXIT
 				optionOK = true;
 			} else {

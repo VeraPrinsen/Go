@@ -40,15 +40,10 @@ public class ServerInputHandler implements Runnable {
 		sh.print("");
 		sh.print("");
 		sh.print("The server has disconnected");
-		sh.client.shutDown();		
+		sh.client.shutDown();
 	}
 	
 	public void shutDown() {
-//		isOpen = false;
-//		try {
-//			in.close();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
+		isOpen = false;
 	}
 }

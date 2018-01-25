@@ -92,7 +92,7 @@ public class GoGUIIntegrator implements GOGUI {
 
     @Override
     public synchronized void stopGUI() {
-        // Not implemented yet
+        
     }
 
     private void createWrappedObject() {

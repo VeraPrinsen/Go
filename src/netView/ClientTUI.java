@@ -20,7 +20,6 @@ public class ClientTUI implements Runnable {
 	private Client client;
 	private BufferedReader in;
 	private boolean isOpen;
-	private Lock exitLock = new ReentrantLock();
 
 	public ClientTUI(Client client) {
 		this.client = client;
@@ -64,12 +63,10 @@ public class ClientTUI implements Runnable {
 	 */
 	// TO DO: EXCEPTION HANDLING
 	public String readString(String prompt) {
-		// exitLock.unlock();
 		String msg;
 		try {
 			System.out.print(prompt + ": ");
 			if ((msg = in.readLine()).equalsIgnoreCase("exit")) {
-				client.shutDown();
 				return Protocol.Client.QUIT;
 			} else {
 				return msg;
@@ -77,8 +74,6 @@ public class ClientTUI implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 			return Protocol.Client.QUIT;
-		} finally {
-			// exitLock.lock();
 		}
 	}
 
@@ -86,20 +81,25 @@ public class ClientTUI implements Runnable {
 	 * Method reads an integer from the input console.
 	 */
 	public int readInt(String prompt) {
-		// exitLock.unlock();
 		boolean inputOK = false;
 		int input = 0;
 		
 		while (!inputOK) {
 			try {
-				input = Integer.parseInt(readString(prompt));
-				inputOK = true;
+				String inputString = readString(prompt);
+				
+				if (inputString.equals(Protocol.Client.QUIT)) {
+					input = -1;
+					inputOK = true;
+				} else {
+					input = Integer.parseInt(inputString);
+					inputOK = true;
+				}
 			} catch (NumberFormatException e) {
 				print("Input must be an integer.");
 			}
 		}
 		
 		return input; 
-		// exitLock.lock();
 	}
 }

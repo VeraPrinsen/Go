@@ -112,8 +112,10 @@ public class Server {
 		
 		List<GameController> games = gameServer.getGames();
 		for (GameController gc : games) {
-			gc.sendEnd(Protocol.Server.ABORTED);
-			gc.shutDown();
+			if (gc.getBoard() != null) {
+				gc.sendEnd(Protocol.Server.ABORTED);
+				gc.shutDown();
+			}
 		}
 		
 		for (ClientHandler ch : clients) {
