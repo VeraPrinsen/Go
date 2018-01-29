@@ -1,7 +1,7 @@
-package serverController;
+package servercontroller;
 
 import general.*;
-import netView.ServerTUI;
+import netview.ServerTUI;
 
 import java.net.BindException;
 import java.net.ServerSocket;
@@ -99,6 +99,13 @@ public class Server {
 		listener.start();		
 	}
 
+	public void removeFromClients(ClientHandler ch) {
+		if (ch.getName() != null) {
+			print("[" + ch.getName() + " has left]");
+		}
+		clients.remove(ch);
+	}
+	
 	/**
 	 * Shuts the server down.
 	 */
@@ -144,6 +151,10 @@ public class Server {
 
 	public GameServer getGameServer() {
 		return this.gameServer;
+	}
+	
+	public List<ClientHandler> getClients() {
+		return this.clients;
 	}
 
 	// INPUT PROCESSORS

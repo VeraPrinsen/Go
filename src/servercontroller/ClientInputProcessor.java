@@ -1,4 +1,4 @@
-package serverController;
+package servercontroller;
 
 public class ClientInputProcessor implements Runnable {
 

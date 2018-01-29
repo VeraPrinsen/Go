@@ -1,6 +1,6 @@
 package tests;
 
-import boardView.GoGUIIntegrator;
+import boardview.GoGUIIntegrator;
 
 /**
  * Example on how to use the GOGUI

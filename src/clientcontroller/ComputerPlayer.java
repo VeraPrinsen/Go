@@ -1,4 +1,4 @@
-package clientController;
+package clientcontroller;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,9 +14,9 @@ public class ComputerPlayer implements Player {
 	private Game game;
 	private Strategy strategy;
 
-	public ComputerPlayer(ServerHandler sh) {
+	public ComputerPlayer(ServerHandler sh, int reactionTimeAI) {
 		this.sh = sh;
-		strategy = new SmartStrategy(this);
+		strategy = new SmartStrategy(this, reactionTimeAI);
 	}
 
 	public void setGame(Game game) {

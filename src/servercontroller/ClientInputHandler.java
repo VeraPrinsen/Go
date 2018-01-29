@@ -1,9 +1,9 @@
-package serverController;
+package servercontroller;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 
-import clientController.ServerInputProcessor;
+import clientcontroller.ServerInputProcessor;
 import general.Protocol;
 
 /**
@@ -37,27 +37,14 @@ public class ClientInputHandler implements Runnable {
 				newInput.setDaemon(true);
 				newInput.start();
 			}
-			ch.print("CLIENTINPUT OUT OF WHILE LOOP");
-			// If the client disconnects, the loop will terminate and will end up here.
 		} catch (IOException e) {
-			ch.print("CLIENTINPUT IOEXCEPTION");
+			
 		}
-
-//		// NOG EVEN NAAAR KIJKEN OF DIT GOED IS
-//		if (isOpen) {
-//			ch.getGame().sendEnd(Protocol.Server.ABORTED);
-//			ch.shutDown();
-//		}
-//		
-		ch.print("ClientInputHandler closed.");
+		
+		ch.shutDown();
 	}
 
 	public void shutDown() {
-		try {
-			isOpen = false;
-			in.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		isOpen = false;
 	}
 }

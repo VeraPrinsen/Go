@@ -1,4 +1,4 @@
-package netView;
+package netview;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import clientController.Client;
+import clientcontroller.Client;
 import general.Protocol;
 
 /**

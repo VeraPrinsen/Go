@@ -2,7 +2,7 @@ package model;
 
 import java.util.*;
 
-import boardView.*;
+import boardview.*;
 
 /**
  * This is the model that represents the board of GO.
@@ -133,6 +133,12 @@ public class Board {
 		}
 
 		return score;
+	}
+	
+	public void stopGUI() {
+		if (useGUI) {
+			gui.stopGUI();
+		}
 	}
 
 	// MISCELLANEOUS METHODS

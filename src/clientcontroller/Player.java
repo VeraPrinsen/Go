@@ -1,4 +1,4 @@
-package clientController;
+package clientcontroller;
 
 public interface Player {
 	

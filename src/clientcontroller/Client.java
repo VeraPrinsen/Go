@@ -1,7 +1,7 @@
-package clientController;
+package clientcontroller;
 
 import general.*;
-import netView.ClientTUI;
+import netview.ClientTUI;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -80,6 +80,11 @@ public class Client {
 		while (!ipOK) {
 			String ipAddress = readString("Enter IP address of the Server host");
 			
+			if (ipAddress.equalsIgnoreCase(Protocol.Client.QUIT)) {
+				print("Connection will not be made. Goodbye!");
+				return;
+			}
+			
 			try {
 	            addr = InetAddress.getByName(ipAddress);
 	            ipOK = true;
@@ -94,6 +99,12 @@ public class Client {
 		while (!portOK) {
 			try {
 				port = readInt("To what portnumber you want to connect to?");
+				
+				if (port == -1) {
+					print("Connection will not be made. Goodbye!");
+					return;
+				}
+				
 				print("");
 				print("Trying to connect to the server.");
 				sock = new Socket(addr, port);
@@ -107,6 +118,13 @@ public class Client {
 		
 		// First: Ask for name
 		clientName = readString("What is your name?");
+		
+		if (clientName.equals(Protocol.Client.QUIT)) {
+			print("Goodbye!");
+			sock.close();
+			return;
+		}
+		
 		print("");
 		
 		print("-----------------------");
@@ -132,10 +150,9 @@ public class Client {
 	// TO DO: IMPLEMENT
 	public void shutDown() {
 		// This is called when the whole program has to shut down (Server disconnect or QUIT in main menu)
-		sh.shutDown();
-
+		// tui.shutDown() (when this is a thread)
 		print("");
-		print("Thanks for playing! GoodBye!");
+		print("Goodbye!");
 	}
 	
 	/**

@@ -1,4 +1,4 @@
-package boardView;
+package boardview;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;

@@ -1,4 +1,4 @@
-package serverController;
+package servercontroller;
 
 import general.*;
 
@@ -30,6 +30,10 @@ public class ClientHandler {
 	private GameController game = null;
 	private ClientHandler opponent;
 	private int playerNo = -1;
+	
+	private boolean inLobby = false;
+	private boolean inGame = false;
+	private boolean isBoard = false;
 
 	public ClientHandler(Server server, Socket sock, BufferedReader in, BufferedWriter out) {
 		this.server = server;
@@ -37,6 +41,7 @@ public class ClientHandler {
 		this.in = in;
 		this.out = out;
 
+		clientName = null;
 		clientExtensions = new int[7];
 
 		run();
@@ -59,6 +64,7 @@ public class ClientHandler {
 	}
 
 	public void shutDown() {		
+		server.removeFromClients(this);
 		try {
 			sock.close();
 			in.close();
@@ -110,18 +116,35 @@ public class ClientHandler {
 
 		switch (args[0]) {
 		case Protocol.Client.NAME:
-			print("NAME command ontvangen");
-
 			clientName = args[1];
-			clientVersionNo = Integer.parseInt(args[3]);
-			clientExtensions[0] = Integer.parseInt(args[5]);
-			clientExtensions[1] = Integer.parseInt(args[6]);
-			clientExtensions[2] = Integer.parseInt(args[7]);
-			clientExtensions[3] = Integer.parseInt(args[8]);
-			clientExtensions[4] = Integer.parseInt(args[9]);
-			clientExtensions[5] = Integer.parseInt(args[10]);
-			clientExtensions[6] = Integer.parseInt(args[11]);
-
+			
+			int equalNames = 0;
+			for (ClientHandler c : server.getClients()) {
+				if (clientName.equals(c.getName())) {
+					equalNames++;
+				}
+				
+				if (equalNames > 1) {
+					sendError(Protocol.Server.NAMETAKEN, "This name is already used. Choose another one.");
+					return;
+				}
+			}
+			
+			try {
+				clientVersionNo = Integer.parseInt(args[3]);
+				clientExtensions[0] = Integer.parseInt(args[5]);
+				clientExtensions[1] = Integer.parseInt(args[6]);
+				clientExtensions[2] = Integer.parseInt(args[7]);
+				clientExtensions[3] = Integer.parseInt(args[8]);
+				clientExtensions[4] = Integer.parseInt(args[9]);
+				clientExtensions[5] = Integer.parseInt(args[10]);
+				clientExtensions[6] = Integer.parseInt(args[11]);
+			} catch (NumberFormatException e) {
+				sendError(Protocol.Server.UNKNOWN, "In the NAME command, integers are expected for the versionnumber and all extensions.");
+				shutDown();
+				return;
+			}
+			
 			if (clientVersionNo != Protocol.Server.VERSIONNO) {
 				sendError(Protocol.Server.INCOMPATIBLEPROTOCOL, "The server runs protocol version " + Protocol.Server.VERSIONNO + ". This is not compatible with your version no. " + clientVersionNo + ".");
 				shutDown();
@@ -132,20 +155,25 @@ public class ClientHandler {
 			break;
 
 		case Protocol.Client.REQUESTGAME:
-			print("REQUESTGAME command ontvangen van " + clientName);
-			server.getGameServer().addToLobby(this);
+			//if (!inGame) {
+				server.getGameServer().addToLobby(this);
+				inLobby = true;
+			//} else {
+				// IS ALREADY IN A GAME
+			//}
 			break;
 
 		case Protocol.Client.SETTINGS:
-			print("SETTINGS command ontvangen van " + clientName);
-
 			String colorString = args[1];
 			int boardSize = Integer.parseInt(args[2]);
 
 			game.setBoard(boardSize, false);
 			game.setColors(this, colorString);
-			game.sendStart();
+			game.sendStart();		
 			game.startGame();
+			
+			inGame = true;
+			isBoard = true;
 			break;
 
 		case Protocol.Client.MOVE:
@@ -189,18 +217,26 @@ public class ClientHandler {
 			break;
 
 		case Protocol.Client.QUIT:
-			print("QUIT command ontvangen van " + clientName);
-
-			if (game != null && game.getBoard() != null) {
-				opponent.sendEndGame(Protocol.Server.ABORTED);
+			if (game == null) {
+				// Client is in lobby
+				server.getGameServer().removeFromLobby(this);
+			} else if (game.getBoard() == null) {
+				// Client is in game, but it has not yet started
+				// Opponent does not know this, so he doesn't need to be informed.
+				// But he needs to be added to the lobby again.
+				opponent.endGame();
+				this.endGame();
+				server.getGameServer().addToLobby(opponent);
+			} else {
+				// Client is in game, and it is started. Opponent needs to be informed.
+				opponent.sendEndGame(Protocol.Server.ABORTED, playerNo);
+				this.sendEndGame(Protocol.Server.ABORTED, playerNo);
 				opponent.endGame();
 				this.endGame();
 			}
-		
 			break;
 
 		default:
-			print("other command ontvangen van " + clientName);
 			print(msg);
 			break;
 		}
@@ -340,13 +376,45 @@ public class ClientHandler {
 	 * 		- ABORTED (someone (server or client) has left the game and therefore the game stopped).
 	 * 		- TIMEOUT (the currentPlayer did not make a move within the TIMEOUT time).
 	 */
-	public void sendEndGame(String reason) {
+	public void sendEndGame(String reason, int responsiblePlayer) {
+		int scorePlayer = 0;
+		int scoreOpponent = 0;
 		
-		
-		int scorePlayer = game.score(playerNo);
-		int scoreOpponent = game.score(Math.abs(playerNo - 1));
-		game = null;
-		
+		if (reason.equals(Protocol.Server.FINISHED)) {
+			scorePlayer = game.score(playerNo);
+			scoreOpponent = game.score(Math.abs(playerNo - 1));
+		} else if (reason.equals(Protocol.Server.ABORTED)) {
+			if (responsiblePlayer == playerNo) {
+				// this player has aborted
+				scorePlayer = 0;
+				scoreOpponent = game.score(Math.abs(playerNo - 1));
+			} else if (responsiblePlayer == Math.abs(playerNo - 1)) {
+				// opponent aborted
+				scorePlayer = game.score(playerNo);
+				scoreOpponent = 0;
+			} else if (responsiblePlayer == 2) {
+				// Server aborted
+				scorePlayer = game.score(playerNo);
+				scoreOpponent = game.score(Math.abs(playerNo - 1));
+			} else {
+				
+			}
+		} else if (reason.equals(Protocol.Server.TIMEOUT)) {
+			if (responsiblePlayer == playerNo) {
+				// this player has timed out
+				scorePlayer = 0;
+				scoreOpponent = game.score(Math.abs(playerNo - 1));
+			} else if (responsiblePlayer == Math.abs(playerNo - 1)) {
+				// opponent timed out
+				scorePlayer = game.score(playerNo);
+				scoreOpponent = 0;
+			} else {
+				
+			}
+		} else {
+			
+		}
+				
 		// ENDGAME reden WINSPELER score VERLIESSPELER score
 		String message;
 		if (scorePlayer > scoreOpponent) {

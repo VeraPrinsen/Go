@@ -1,6 +1,6 @@
-package serverController;
+package servercontroller;
 
-import boardView.InvalidCoordinateException;
+import boardview.InvalidCoordinateException;
 import general.Protocol;
 import model.*;
 
@@ -37,7 +37,7 @@ public class GameController {
 	public void setup() {
 		// Make a game for both clientHandler on this server
 		players[0].startGame(this, 0, players[1]);
-		players[1].startGame(this, 1 , players[0]);
+		players[1].startGame(this, 1, players[0]);
 		
 		// Send the first player the START command and request color and boardsize
 		players[0].sendRequestSettings();
@@ -211,7 +211,7 @@ public class GameController {
 	 * Send to players when the game has ended.
 	 */
 	public void sendEnd(String reason) {
-		players[0].sendEndGame(reason);
-		players[1].sendEndGame(reason);
+		players[0].sendEndGame(reason, -1);
+		players[1].sendEndGame(reason, -1);
 	}
 }

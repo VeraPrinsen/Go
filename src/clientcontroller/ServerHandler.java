@@ -1,4 +1,4 @@
-package clientController;
+package clientcontroller;
 
 import general.*;
 import java.io.BufferedReader;
@@ -73,6 +73,7 @@ public class ServerHandler {
 			print("IOException occured.");
 		}
 		
+		client.shutDown();
 		System.exit(0);
 	}
 
@@ -235,6 +236,7 @@ public class ServerHandler {
 				// Should not happen
 			}
 
+			// game.getBoard().stopGUI();
 			game = null;
 			
 			print("");
@@ -252,29 +254,29 @@ public class ServerHandler {
 			switch (args[1]) {
 				case Protocol.Server.UNKNOWN:
 					print("");
-					print(args[2]);
+					print("Message from server: " + args[2]);
 					break;
 					
 				case Protocol.Server.INVALID:
 					print("");
-					print(args[2]);
+					print("Message from server: " + args[2]);
 					break;
 					
 				case Protocol.Server.NAMETAKEN:
 					print("");
-					print(args[2]);
+					print("Message from server: " + args[2]);
 					shutDown();
 					break;
 					
 				case Protocol.Server.INCOMPATIBLEPROTOCOL:
 					print("");
-					print(args[2]);
+					print("Message from server: " + args[2]);
 					shutDown();
 					break;
 					
 				case Protocol.Server.OTHER:
 					print("");
-					print(args[2]);
+					print("Message from server: " + args[2]);
 					break;
 					
 				default:
@@ -307,6 +309,34 @@ public class ServerHandler {
 	}
 	
 	/**
+	 * The method called when information must be send to the server.
+	 */
+	// TO DO: EXCEPTION HANDLING
+	public void send(String msg) {
+		try {
+			out.write(msg + Protocol.General.COMMAND_END);
+			out.flush();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * This method creates the versionString which is the first thing that is send
+	 * to the server after connecting to it.
+	 */
+	public void sendVersion() {
+		String message = Protocol.Client.NAME + Protocol.General.DELIMITER1 + client.getName()
+				+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 + Protocol.Client.VERSIONNO
+				+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1
+				+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge + Protocol.General.DELIMITER1
+				+ Extensions.leaderboard + Protocol.General.DELIMITER1 + Extensions.security
+				+ Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1
+				+ Extensions.simultaneous + Protocol.General.DELIMITER1 + Extensions.multimoves;
+		send(message);
+	}
+	
+	/**
 	 * Is shown just after the server and client have made a connection.
 	 */
 	public void showMainMenu() {
@@ -322,40 +352,12 @@ public class ServerHandler {
 				sendRequest();
 				optionOK = true;
 			} else if (option == 2 || option == -1) {
-				// EXIT
+				shutDown();
 				optionOK = true;
 			} else {
 				print("This is an invalid option. Try again.");
 			}
 		}
-	}
-
-	/**
-	 * The method called when information must be send to the server.
-	 */
-	// TO DO: EXCEPTION HANDLING
-	public void send(String msg) {
-		try {
-			out.write(msg + Protocol.General.COMMAND_END);
-			out.flush();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * This method creates the versionString which is the first thing that is send
-	 * to the server after connecting to it.
-	 */
-	public void sendVersion() {
-		String message = Protocol.Client.NAME + Protocol.General.DELIMITER1 + client.getName()
-				+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 + Protocol.Client.VERSIONNO
-				+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1
-				+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge + Protocol.General.DELIMITER1
-				+ Extensions.leaderboard + Protocol.General.DELIMITER1 + Extensions.security
-				+ Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1
-				+ Extensions.simultaneous + Protocol.General.DELIMITER1 + Extensions.multimoves;
-		send(message);
 	}
 
 	public void sendRequest() {
@@ -367,11 +369,17 @@ public class ServerHandler {
 		boolean optionOK = false;
 		while (!optionOK) {
 			int option = client.readInt("Choose an option");
-			if (option == 1) {
+			if (option == -1 ) {
+				// EXIT: Request has not yet been send, so only quiting the program is enough.
+				showMainMenu();
+				return;
+			} else if (option == 1) {
 				player = new HumanPlayer(this);
 				optionOK = true;
 			} else if (option == 2) {
-				player = new ComputerPlayer(this);
+				boolean inputOK = false;
+				int reactionTimeAI = askReactionTime();
+				player = new ComputerPlayer(this, reactionTimeAI);
 				optionOK = true;
 			} else {
 				print("This is an invalid option. Try again.");
@@ -384,6 +392,28 @@ public class ServerHandler {
 		send(message);
 		print("Game requested. Wait for other players to connect...");
 	}
+	
+	public int askReactionTime() {
+		print("");
+		int reactionTime = 0;	
+		
+		boolean optionOK = false;
+		while (!optionOK) {
+			int seconds = readInt("Within how many seconds should the computer have determined a move?");
+			if (seconds == -1) {
+				// EXIT: Request has not yet been send, so only quiting the program is enough.
+				reactionTime = -1;
+				optionOK = true;
+			} else if (seconds > 0) {
+				reactionTime = seconds;
+				optionOK = true;
+			} else {
+				print("This is an invalid input. The time must be greater than 0 seconds.");
+			}
+		}
+		
+		return reactionTime;
+	}
 
 	public void sendSettings() {
 		boolean colorOK = false;
@@ -391,7 +421,11 @@ public class ServerHandler {
 		while (!colorOK) {
 			int colorInt = client.readInt("What color do you want to play with? (1 - BLACK, 2 - WHITE)");
 			colorString = "";
-			if (colorInt == 1) {
+			if (colorInt == -1) {
+				sendQuit();
+				showMainMenu();
+				return;
+			} else if (colorInt == 1) {
 				colorString = Protocol.General.BLACK;
 				colorOK = true;
 			} else if (colorInt == 2) {
@@ -409,7 +443,11 @@ public class ServerHandler {
 			int maxBoardsize = 21;
 			boardSize = client.readInt("What do you want to be the size of the board? (Integer between " + minBoardsize
 					+ " - " + maxBoardsize + ")");
-			if ((boardSize < minBoardsize) || (boardSize > maxBoardsize)) {
+			if (boardSize == -1) {
+				sendQuit();
+				showMainMenu();
+				return;
+			} else if ((boardSize < minBoardsize) || (boardSize > maxBoardsize)) {
 				print("This is not a valid input. Enter an integer between " + minBoardsize + " and " + maxBoardsize
 						+ ".");
 			} else {
@@ -424,6 +462,7 @@ public class ServerHandler {
 	}
 
 	public void sendQuit() {
-
+		String message = Protocol.Client.QUIT;
+		send(message);
 	}
 }

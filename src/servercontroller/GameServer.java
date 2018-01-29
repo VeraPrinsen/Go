@@ -1,4 +1,4 @@
-package serverController;
+package servercontroller;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +51,7 @@ public class GameServer implements Runnable {
 	// TO DO: MAKE lobby THREAD SAFE
 	public void removeFromLobby(ClientHandler ch) {
 		synchronized (lobby) {
+			server.print(ch.getName() + " removed from Lobby.");
 			lobby.remove(ch);
 		}
 	}

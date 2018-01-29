@@ -1,4 +1,4 @@
-package boardView;
+package boardview;
 
 /**
  * Created by daan.vanbeek on 13-12-16.

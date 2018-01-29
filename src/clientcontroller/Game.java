@@ -1,6 +1,6 @@
-package clientController;
+package clientcontroller;
 
-import boardView.InvalidCoordinateException;
+import boardview.InvalidCoordinateException;
 import general.Protocol;
 import model.Board;
 import model.Token;

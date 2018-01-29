@@ -1,4 +1,4 @@
-package boardView;
+package boardview;
 
 import javafx.application.Platform;
 
@@ -92,7 +92,7 @@ public class GoGUIIntegrator implements GOGUI {
 
     @Override
     public synchronized void stopGUI() {
-        
+        System.exit(0);
     }
 
     private void createWrappedObject() {

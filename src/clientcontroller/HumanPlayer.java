@@ -1,4 +1,4 @@
-package clientController;
+package clientcontroller;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -15,7 +15,7 @@ public class HumanPlayer implements Player {
 	public HumanPlayer(ServerHandler sh) {
 		this.sh = sh;
 		game = null;
-		hintStrategy = new SmartStrategy(this);
+		hintStrategy = new SmartStrategy(this, 5);
 	}
 	
 	public void setGame(Game game) {
@@ -43,6 +43,7 @@ public class HumanPlayer implements Player {
 			String xString = sh.readString("On what row you want to place your stone?");
 			
 			if (xString.equals(Protocol.Client.QUIT)) {
+				sh.sendQuit();
 				return;
 			} else if (xString.equalsIgnoreCase("pass")) {
 				game.sendPass();
@@ -63,6 +64,7 @@ public class HumanPlayer implements Player {
 			String yString = sh.readString("On what column do you want to place your stone?");
 			
 			if (yString.equals(Protocol.Client.QUIT)) {
+				sh.sendQuit();
 				return;
 			} else if (yString.equalsIgnoreCase("pass")) {
 				game.sendPass();

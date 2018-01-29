@@ -1,11 +1,11 @@
-package netView;
+package netview;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
 import general.Protocol;
-import serverController.Server;
+import servercontroller.Server;
 
 /**
  * The ServerTUI takes care of the in- and output to and from the console.
