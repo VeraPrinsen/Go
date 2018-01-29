@@ -17,6 +17,7 @@ public class Group {
 	//@ requires !getGroup().contains(f)
 	public void add(Field f) {
 		groupFields.add(f);
+		f.setGroup(this);
 	}
 	
 	public Token getToken() {
@@ -55,6 +56,22 @@ public class Group {
 			}
 		}
 		return isCaptured;
+	}
+	
+	public String canCapture(Token t) {
+		List<Field> emptyFields = new ArrayList<>();
+
+		for (Field f : perimeterFields) {
+			if (f.getToken().equals(Token.EMPTY)) {
+				emptyFields.add(f);
+			}
+		}
+		
+		if (emptyFields.size() == 1) {
+			return emptyFields.get(0).getX() + "_" + emptyFields.get(0).getY();
+		} else {
+			return "false";
+		}
 	}
 	
 	public int size() {

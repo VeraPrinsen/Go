@@ -1,5 +1,6 @@
 package clientcontroller;
 
+import boardview.GOGUI;
 import boardview.InvalidCoordinateException;
 import general.Protocol;
 import model.Board;
@@ -16,19 +17,21 @@ public class Game {
 	private ServerHandler sh;
 
 	private int numberPlayers;
-	private final int DIM;
+	private final int dim;
 	private Player player;
 	private String opponent;
 	private Token token;
 
 	private Board board;
 	private int passes;
+	private int moves;
 
-	public Game(ServerHandler sh, int numberPlayers, int DIM, Player player, String opponent, String color) {
+	public Game(ServerHandler sh, int numberPlayers, int dim, Player player, 
+			String opponent, String color, GOGUI gui) {
 		this.sh = sh;
 
 		this.numberPlayers = numberPlayers;
-		this.DIM = DIM;
+		this.dim = dim;
 		this.player = player;
 		this.opponent = opponent;
 
@@ -38,8 +41,9 @@ public class Game {
 			this.token = Token.WHITE;
 		}
 
-		board = new Board(DIM, true);
-		passes = 0;
+		this.board = new Board(dim, gui);
+		this.passes = 0;
+		this.moves = dim * dim;
 	}
 
 	// GETTERS & SETTERS ===========================================================================
@@ -54,7 +58,11 @@ public class Game {
 	public int getPasses() {
 		return this.passes;
 	}
-
+	
+	public int getMoves() {
+		return this.moves;
+	}
+	
 	// PRINTERS & SENDERS =========================================================================
 	public void print(String msg) {
 		sh.print(msg);
@@ -95,6 +103,7 @@ public class Game {
 	 * the move is valid, it is made in the model through these methods.
 	 */
 	public void setMovePlayer(int x, int y, boolean isPlayer) {
+		moves--;
 		if (isPlayer) {
 			setMove(x, y, token);
 		} else {
@@ -113,7 +122,7 @@ public class Game {
 
 	// CHECKS ==================================================================================
 	public boolean gameOver() {
-		return passes > 1;
+		return (passes > 1) || (moves <= 0);
 	}
 
 }

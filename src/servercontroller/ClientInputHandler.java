@@ -41,9 +41,12 @@ public class ClientInputHandler implements Runnable {
 			
 		}
 		
-		ch.shutDown();
+		if (isOpen) {
+			ch.shutDown();
+		}
 	}
 
+	// WHEN IS THIS USED?????? AND SHOULD THE CALLER OF THIS REMOVE THE CLIENT FROM CLIENTLIST IN SERVER????
 	public void shutDown() {
 		isOpen = false;
 	}

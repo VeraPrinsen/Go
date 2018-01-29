@@ -82,6 +82,7 @@ public class Server {
 				try {
 					while (true) {
 						Socket sock = ssock.accept();
+						print("A client has connected.");
 						BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 						BufferedWriter out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
 						ClientHandler ch = new ClientHandler(Server.this, sock, in, out);
@@ -100,6 +101,10 @@ public class Server {
 	}
 
 	public void removeFromClients(ClientHandler ch) {
+		if (ch.getGame() != null) {
+			ch.getGame().sendEnd(Protocol.Server.ABORTED); 
+		}
+		
 		if (ch.getName() != null) {
 			print("[" + ch.getName() + " has left]");
 		}
@@ -128,6 +133,7 @@ public class Server {
 		for (ClientHandler ch : clients) {
 			ch.shutDown();
 		}
+		clients.clear();
 		
 		print("GoodBye!");
 		

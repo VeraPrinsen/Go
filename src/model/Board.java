@@ -13,7 +13,7 @@ import boardview.*;
 // TO DO: EXCEPTION HANDLING
 public class Board {
 
-	private final int DIM;
+	private final int dim;
 	private Field[] board;
 	private Set<String> previousBoards;
 	private List<Group> groups;
@@ -21,17 +21,28 @@ public class Board {
 	private boolean useGUI;
 	private GOGUI gui;
 
-	public Board(int DIM, boolean useGUI) {
-		this.DIM = DIM;
-		this.board = new Field[DIM * DIM];
-		this.useGUI = useGUI;
-		if (useGUI) {
-			this.gui = new GoGUIIntegrator(false, false, DIM);
-		}
+	public Board(int dim, GOGUI gui) {
+		useGUI = true;
+		this.gui = gui;
+		gui.startGUI();
+		
+		this.dim = dim;
+		this.board = new Field[dim * dim];
 		this.groups = new ArrayList<>();
 		this.previousBoards = new HashSet<>();
 
 		this.reset();
+	}
+	
+	public Board(int dim) {
+		this.dim = dim;
+		useGUI = false;
+		
+		this.board = new Field[dim * dim];
+		this.groups = new ArrayList<>();
+		this.previousBoards = new HashSet<>();
+		
+		this.reset();		
 	}
 
 	// RESETTERS & UPDATERS
@@ -42,22 +53,22 @@ public class Board {
 	 */
 	private void reset() {
 		// Create a field for each location
-		for (int i = 0; i < DIM; i++) {
-			for (int j = 0; j < DIM; j++) {
+		for (int i = 0; i < dim; i++) {
+			for (int j = 0; j < dim; j++) {
 				board[index(i, j)] = new Field(i, j);
 			}
 		}
 
 		// Give each field its direct neighbors
-		for (int i = 0; i < DIM; i++) {
-			for (int j = 0; j < DIM; j++) {
+		for (int i = 0; i < dim; i++) {
+			for (int j = 0; j < dim; j++) {
 				for (int di = -1; di <= 1; di = di + 2) {
-					if ((i + di) >= 0 && (i + di) < DIM) {
+					if ((i + di) >= 0 && (i + di) < dim) {
 						board[index(i, j)].addNeighbor(board[index(i + di, j)]);
 					}
 				}
 				for (int dj = -1; dj <= 1; dj = dj + 2) {
-					if ((j + dj) >= 0 && (j + dj) < DIM) {
+					if ((j + dj) >= 0 && (j + dj) < dim) {
 						board[index(i, j)].addNeighbor(board[index(i, j + dj)]);
 					}
 				}
@@ -67,9 +78,8 @@ public class Board {
 		update(Token.EMPTY);
 
 		if (useGUI) {		
-			gui.startGUI();
 			try {
-				gui.setBoardSize(DIM);
+				gui.setBoardSize(dim);
 			} catch (InvalidCoordinateException e) {
 				// Should not happen because it only resets the boardSize, it has nothing to do
 				// with coordinates on the board...
@@ -106,7 +116,7 @@ public class Board {
 	// GETTERS & SETTERS
 	// ==================================================================
 	public int getDIM() {
-		return this.DIM;
+		return this.dim;
 	}
 
 	public Field[] getFields() {
@@ -137,7 +147,7 @@ public class Board {
 	
 	public void stopGUI() {
 		if (useGUI) {
-			gui.stopGUI();
+			gui = null;
 		}
 	}
 
@@ -146,8 +156,8 @@ public class Board {
 	/**
 	 * Make a copy of the whole Board class.
 	 */
-	private Board boardCopy() {
-		Board newboard = new Board(DIM, false);
+	public Board boardCopy() {
+		Board newboard = new Board(dim);
 		for (int i = 0; i < board.length; i++) {
 			newboard.setField(i, board[i].getToken());
 		}
@@ -180,11 +190,19 @@ public class Board {
 	 * From x and y coordinates to index i.
 	 */
 	private int index(int x, int y) {
-		return (DIM * x) + y;
+		return (dim * x) + y;
 	}
 
 	// GETTERS & SETTERS
 	// ==============================================================================
+	private Field getBoardField(int i) {
+		return board[i];
+	}
+	
+	public Field getBoardField(int x, int y) {
+		return getBoardField(index(x, y));
+	}
+	
 	/**
 	 * To get the token on field index i.
 	 */
@@ -193,7 +211,7 @@ public class Board {
 	}
 
 	/**
-	 * To get the token on field (x, y)
+	 * To get the token on field (x, y).
 	 */
 	public Token getField(int x, int y) {
 		return getField(index(x, y));
@@ -263,12 +281,22 @@ public class Board {
 		} else {
 			Board nextBoard = boardCopy();
 			nextBoard.setField(index(x, y), t);
-			if (previousBoards.contains(nextBoard.fieldString())) {
+			if (previousBoards.contains(nextBoard.fieldString()) || this.fieldString().equals(nextBoard.fieldString())) {
 				throw new InvalidCoordinateException("Cannot make a move that will result in a boardstate that has already been there.");
 			}
 		}
 
 		return true;
+	}
+	
+	public boolean canBeCaptured(Token t) {
+		for (Group g : groups) {
+			String outcome = g.canCapture(t.other());
+			if (!outcome.equals("false")) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// @ requires board1.length == board2.length
@@ -290,7 +318,7 @@ public class Board {
 	}
 
 	private boolean isField(int index) {
-		return (index < (DIM * DIM)) && (index >= 0);
+		return (index < (dim * dim)) && (index >= 0);
 	}
 
 	public boolean isField(int x, int y) {

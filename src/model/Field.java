@@ -8,6 +8,7 @@ public class Field {
 	private int y;
 	private Token t;
 	private Set<Field> neighbors;
+	private Group group;
 	
 	public Field(int x, int y) {
 		this.x = x;
@@ -40,4 +41,11 @@ public class Field {
 		return this.neighbors;
 	}
 	
+	public void setGroup(Group g) {
+		this.group = g;
+	}
+	
+	public Group getGroup() {
+		return this.group;
+	}
 }

@@ -1,5 +1,6 @@
 package servercontroller;
 
+import boardview.GOGUI;
 import boardview.InvalidCoordinateException;
 import general.Protocol;
 import model.*;
@@ -19,6 +20,7 @@ public class GameController {
 	private long startTime;
 	private Board board;
 	private int passes;
+	private int moves;
 	private boolean isRunning;
 	
 	public GameController(ClientHandler ch1, ClientHandler ch2) {
@@ -95,9 +97,10 @@ public class GameController {
 	/**
 	 * Set the boardsize after the first player has send their desires settings.
 	 */
-	public void setBoard(int DIM, boolean useGUI) {
-		board = new Board(DIM, useGUI);
+	public void setBoard(int DIM) {
+		board = new Board(DIM);
 		passes = 0;
+		moves = DIM * DIM;
 	}
 	
 	/**
@@ -148,6 +151,7 @@ public class GameController {
 		}
 	
 		if (validMove) {
+			moves--;
 			board.setField(x, y, playerToken[playerNo]);
 			sendMove(x, y, playerNo);
 		}
@@ -157,7 +161,7 @@ public class GameController {
 	 * After a player passes, this is called to check if the game has finished.
 	 */
 	public boolean gameOver() {
-		return passes > 1;
+		return (passes > 1) || (moves <= 0);
 	}
 	
 	/**
@@ -194,7 +198,6 @@ public class GameController {
 	 */
 	public void sendMove(int x, int y, int playerNo) {
 		players[playerNo].sendValidMove(x, y);
-		currentPlayer = Math.abs(playerNo-1);
 		players[Math.abs(playerNo-1)].sendMove(x, y);
 	}
 	
@@ -203,7 +206,6 @@ public class GameController {
 	 */
 	public void sendPass(int playerNo) {
 		players[playerNo].sendValidPass();
-		currentPlayer = Math.abs(playerNo-1);
 		players[Math.abs(playerNo-1)].sendPass();
 	}
 	

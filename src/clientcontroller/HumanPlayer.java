@@ -15,7 +15,7 @@ public class HumanPlayer implements Player {
 	public HumanPlayer(ServerHandler sh) {
 		this.sh = sh;
 		game = null;
-		hintStrategy = new SmartStrategy(this, 5);
+		hintStrategy = new SmartStrategy(this, 1);
 	}
 	
 	public void setGame(Game game) {
@@ -34,7 +34,7 @@ public class HumanPlayer implements Player {
 			sh.print("The hint is to pass this round.");
 		} else {
 			String[] coords = hintMove.split("_");
-			game.getBoard().setHintField(Integer.parseInt(coords[0]), Integer.parseInt(coords[1]));
+			game.getBoard().setHintField(Integer.parseInt(coords[1]), Integer.parseInt(coords[0]));
 		}
 		
 		boolean xOK = false;
@@ -51,7 +51,11 @@ public class HumanPlayer implements Player {
 			} else {
 				try {
 					x = Integer.parseInt(xString);
-					xOK = true;
+					if (x >= game.getBoard().getDIM()) {
+						sh.print("The x coordinate lies not on the board.");
+					} else {
+						xOK = true;
+					}
 				} catch (NumberFormatException e) {
 					sh.print("You must either pass or enter an integer.");
 				}
@@ -72,7 +76,11 @@ public class HumanPlayer implements Player {
 			} else {
 				try {
 					y = Integer.parseInt(yString);
-					yOK = true;
+					if (y >= game.getBoard().getDIM()) {
+						sh.print("The y coordinate lies not on the board.");
+					} else {
+						xOK = true;
+					}
 				} catch (NumberFormatException e) {
 					sh.print("You must either pass or enter an integer.");
 				}

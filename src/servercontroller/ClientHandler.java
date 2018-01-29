@@ -52,7 +52,7 @@ public class ClientHandler {
 	 * ClientInputHandler
 	 * 
 	 * And sends the information of this client: Client name, version, extension
-	 * information
+	 * information.
 	 */
 	public void run() {
 		clientInput = new ClientInputHandler(this, in);
@@ -92,10 +92,10 @@ public class ClientHandler {
 	 * Start a game for this particular client. game is the game object that is
 	 * used. player says if the player was the first (0) or second (1) in the game.
 	 */
-	public void startGame(GameController game, int playerNo, ClientHandler opponent) {
-		this.game = game;
-		this.playerNo = playerNo;
-		this.opponent = opponent;
+	public void startGame(GameController newGame, int newPlayerNo, ClientHandler newOpponent) {
+		this.game = newGame;
+		this.playerNo = newPlayerNo;
+		this.opponent = newOpponent;
 	}
 
 	/**
@@ -115,130 +115,149 @@ public class ClientHandler {
 		String[] args = msg.split("\\" + Protocol.General.DELIMITER1);
 
 		switch (args[0]) {
-		case Protocol.Client.NAME:
-			clientName = args[1];
-			
-			int equalNames = 0;
-			for (ClientHandler c : server.getClients()) {
-				if (clientName.equals(c.getName())) {
-					equalNames++;
+			case Protocol.Client.NAME:
+				clientName = args[1];
+				
+				int equalNames = 0;
+				for (ClientHandler c : server.getClients()) {
+					if (clientName.equals(c.getName())) {
+						equalNames++;
+					}
+					
+					if (equalNames > 1) {
+						sendError(Protocol.Server.NAMETAKEN, 
+								"This name is already used. Choose another one.");
+						return;
+					}
 				}
 				
-				if (equalNames > 1) {
-					sendError(Protocol.Server.NAMETAKEN, "This name is already used. Choose another one.");
+				try {
+					clientVersionNo = Integer.parseInt(args[3]);
+					clientExtensions[0] = Integer.parseInt(args[5]);
+					clientExtensions[1] = Integer.parseInt(args[6]);
+					clientExtensions[2] = Integer.parseInt(args[7]);
+					clientExtensions[3] = Integer.parseInt(args[8]);
+					clientExtensions[4] = Integer.parseInt(args[9]);
+					clientExtensions[5] = Integer.parseInt(args[10]);
+					clientExtensions[6] = Integer.parseInt(args[11]);
+				} catch (NumberFormatException e) {
+					sendError(Protocol.Server.UNKNOWN, "In the NAME command, "
+							+ "integers are expected for the versionnumber and all extensions.");
+					shutDown();
+					server.removeFromClients(this);
 					return;
 				}
-			}
-			
-			try {
-				clientVersionNo = Integer.parseInt(args[3]);
-				clientExtensions[0] = Integer.parseInt(args[5]);
-				clientExtensions[1] = Integer.parseInt(args[6]);
-				clientExtensions[2] = Integer.parseInt(args[7]);
-				clientExtensions[3] = Integer.parseInt(args[8]);
-				clientExtensions[4] = Integer.parseInt(args[9]);
-				clientExtensions[5] = Integer.parseInt(args[10]);
-				clientExtensions[6] = Integer.parseInt(args[11]);
-			} catch (NumberFormatException e) {
-				sendError(Protocol.Server.UNKNOWN, "In the NAME command, integers are expected for the versionnumber and all extensions.");
-				shutDown();
-				return;
-			}
-			
-			if (clientVersionNo != Protocol.Server.VERSIONNO) {
-				sendError(Protocol.Server.INCOMPATIBLEPROTOCOL, "The server runs protocol version " + Protocol.Server.VERSIONNO + ". This is not compatible with your version no. " + clientVersionNo + ".");
-				shutDown();
-				return;
-			}
-			
-			print("[" + clientName + " has entered]");
-			break;
-
-		case Protocol.Client.REQUESTGAME:
-			//if (!inGame) {
+				
+				if (clientVersionNo != Protocol.Server.VERSIONNO) {
+					sendError(Protocol.Server.INCOMPATIBLEPROTOCOL, 
+							"The server runs protocol version " + Protocol.Server.VERSIONNO 
+							+ ". This is not compatible with your version no. " 
+									+ clientVersionNo + ".");
+					shutDown();
+					return;
+				}
+				
+				print("[" + clientName + " has entered]");
+				break;
+	
+			case Protocol.Client.REQUESTGAME:
 				server.getGameServer().addToLobby(this);
 				inLobby = true;
-			//} else {
-				// IS ALREADY IN A GAME
-			//}
-			break;
-
-		case Protocol.Client.SETTINGS:
-			String colorString = args[1];
-			int boardSize = Integer.parseInt(args[2]);
-
-			game.setBoard(boardSize, false);
-			game.setColors(this, colorString);
-			game.sendStart();		
-			game.startGame();
-			
-			inGame = true;
-			isBoard = true;
-			break;
-
-		case Protocol.Client.MOVE:
-			if (!((game == null) || (game.getCurrentPlayer() != playerNo))) {
 				
-				
-				if (args[1].equals(Protocol.Client.PASS)) {
-					game.makePass(playerNo);
+				break;
+	
+			case Protocol.Client.SETTINGS:
+				if (inLobby) {
+					String colorString = args[1];
+					int boardSize = Integer.parseInt(args[2]);
+		
+					game.setBoard(boardSize);
+					game.setColors(this, colorString);
+					game.sendStart();		
+					game.startGame();
 					
-					if (game.gameOver()) {
-						// GAME OVER
-						game.setCurrentPlayer(-1);
-						game.sendEnd(Protocol.Server.FINISHED);
-					} else {
-						// expect a move from the other player
-					}
+					inGame = true;
+					isBoard = true;
+					break;
 				} else {
-					String[] coordinates = args[1].split(Protocol.General.DELIMITER2);
-					int x = 0;
-					int y = 0;
-					try {
-						x = Integer.parseInt(coordinates[0]);
-						y = Integer.parseInt(coordinates[1]);
-						game.makeMove(x, y, playerNo);
-					} catch (NumberFormatException e) {
-						sendError(Protocol.Server.INVALID, "Invalid coordinates, they should be integers.");
-					}
-					
-					
+					sendError(Protocol.Server.ERROR, "Cannot send SETINGS if you have not requested a game yet.");
 				}
-			} else {
-				if (game == null) {
-					sendError(Protocol.Server.INVALID, "A game has not started yet.");
-				} else if (game.getCurrentPlayer() != playerNo) {
-					sendError(Protocol.Server.INVALID, "It is not your turn.");
+				
+	
+			case Protocol.Client.MOVE:
+				if (!((game == null) || (game.getCurrentPlayer() != playerNo))) {
+					game.setCurrentPlayer(Math.abs(playerNo - 1));
+					
+					if (args[1].equals(Protocol.Client.PASS)) {
+						game.makePass(playerNo);
+						
+						if (game.gameOver()) {
+							// GAME OVER
+							game.setCurrentPlayer(-1);
+							game.sendEnd(Protocol.Server.FINISHED);
+						}
+					} else {
+						String[] coordinates = args[1].split(Protocol.General.DELIMITER2);
+						int x = 0;
+						int y = 0;
+						try {
+							x = Integer.parseInt(coordinates[0]);
+							y = Integer.parseInt(coordinates[1]);
+							game.makeMove(x, y, playerNo);
+							
+							if (game.gameOver()) {
+								// GAME OVER
+								game.setCurrentPlayer(-1);
+								game.sendEnd(Protocol.Server.FINISHED);
+							}
+						} catch (NumberFormatException e) {
+							game.setCurrentPlayer(playerNo);
+							sendError(Protocol.Server.INVALID, 
+									"Invalid coordinates, they should be integers.");
+						}
+					}
 				} else {
-					sendError(Protocol.Server.INVALID, "Invalid move.");
-				}	
-			}
-
-			break;
-
-		case Protocol.Client.QUIT:
-			if (game == null) {
-				// Client is in lobby
-				server.getGameServer().removeFromLobby(this);
-			} else if (game.getBoard() == null) {
-				// Client is in game, but it has not yet started
-				// Opponent does not know this, so he doesn't need to be informed.
-				// But he needs to be added to the lobby again.
-				opponent.endGame();
-				this.endGame();
-				server.getGameServer().addToLobby(opponent);
-			} else {
-				// Client is in game, and it is started. Opponent needs to be informed.
-				opponent.sendEndGame(Protocol.Server.ABORTED, playerNo);
-				this.sendEndGame(Protocol.Server.ABORTED, playerNo);
-				opponent.endGame();
-				this.endGame();
-			}
-			break;
-
-		default:
-			print(msg);
-			break;
+					if (game == null) {
+						sendError(Protocol.Server.INVALID, "A game has not started yet.");
+					} else if (game.getCurrentPlayer() != playerNo) {
+						sendError(Protocol.Server.INVALID, "It is not your turn.");
+					} else {
+						sendError(Protocol.Server.INVALID, "Invalid move.");
+					}	
+				}
+	
+				break;
+	
+			case Protocol.Client.QUIT:
+			case Protocol.Client.EXIT:
+				if (game == null) {
+					// Client is in lobby
+					server.getGameServer().removeFromLobby(this);
+				} else if (game.getBoard() == null) {
+					// Client is in game, but it has not yet started
+					// Opponent does not know this, so he doesn't need to be informed.
+					// But he needs to be added to the lobby again.
+					opponent.endGame();
+					this.endGame();
+					server.getGameServer().addToLobby(opponent);
+				} else {
+					// Client is in game, and it is started. Opponent needs to be informed.
+					opponent.sendEndGame(Protocol.Server.ABORTED, playerNo);
+					this.sendEndGame(Protocol.Server.ABORTED, playerNo);
+					opponent.endGame();
+					this.endGame();
+				}
+				
+				// If EXIT, also shutDown client
+				if (args[0].equals(Protocol.Client.EXIT)) {
+					shutDown();
+					server.removeFromClients(this);
+				}
+				break;
+				
+			default:
+				print(msg);
+				break;
 		}
 
 	}
@@ -397,7 +416,8 @@ public class ClientHandler {
 				scorePlayer = game.score(playerNo);
 				scoreOpponent = game.score(Math.abs(playerNo - 1));
 			} else {
-				
+				scorePlayer = game.score(playerNo);
+				scoreOpponent = game.score(Math.abs(playerNo - 1));
 			}
 		} else if (reason.equals(Protocol.Server.TIMEOUT)) {
 			if (responsiblePlayer == playerNo) {
