@@ -45,6 +45,10 @@ public class HumanPlayer implements Player {
 			if (xString.equals(Protocol.Client.QUIT)) {
 				sh.sendQuit();
 				return;
+			} else if (xString.equals(Protocol.Client.EXIT)) {
+				sh.sendQuit();
+				sh.shutDown();
+				return;
 			} else if (xString.equalsIgnoreCase("pass")) {
 				game.sendPass();
 				return;
@@ -70,6 +74,10 @@ public class HumanPlayer implements Player {
 			if (yString.equals(Protocol.Client.QUIT)) {
 				sh.sendQuit();
 				return;
+			} else if (yString.equals(Protocol.Client.EXIT)) {
+				sh.sendQuit();
+				sh.shutDown();
+				return;
 			} else if (yString.equalsIgnoreCase("pass")) {
 				game.sendPass();
 				return;
@@ -79,7 +87,7 @@ public class HumanPlayer implements Player {
 					if (y >= game.getBoard().getDIM()) {
 						sh.print("The y coordinate lies not on the board.");
 					} else {
-						xOK = true;
+						yOK = true;
 					}
 				} catch (NumberFormatException e) {
 					sh.print("You must either pass or enter an integer.");

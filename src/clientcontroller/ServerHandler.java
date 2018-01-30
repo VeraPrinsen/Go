@@ -79,7 +79,7 @@ public class ServerHandler {
 
 		client.shutDown();
 		System.exit(0);
-		
+
 	}
 
 	// GETTERS & SETTERS
@@ -200,17 +200,14 @@ public class ServerHandler {
 				String player2 = args[4];
 				int score2 = Integer.parseInt(args[5]);
 	
-				String playerName;
 				String opponentName;
 				int playerScore;
 				int opponentScore;
 				if (player1.equals(client.getName())) {
-					playerName = player1;
 					playerScore = score1;
 					opponentName = player2;
 					opponentScore = score2;
 				} else {
-					playerName = player2;
 					playerScore = score2;
 					opponentName = player1;
 					opponentScore = score1;
@@ -220,30 +217,25 @@ public class ServerHandler {
 					// Game was finished
 					if (playerScore > opponentScore) {
 						print("");
-						print("Congratulations! You won from " + opponentName + " with " 
-								+ playerScore + " against " + opponentScore + ".");
+						print("Congratulations! You won from " + opponentName + " with " + playerScore + " against "
+								+ opponentScore + ".");
 					} else if (opponentScore > playerScore) {
 						print("");
-						print("You lost from " + opponentName + " with " + playerScore 
-								+ " against " + opponentScore + ".");
+						print("You lost from " + opponentName + " with " + playerScore + " against " + opponentScore + ".");
 					} else {
 						print("");
-						print("It was a draw. You and " + opponentName + " both scored " 
-								+ playerScore + " points.");
+						print("It was a draw. You and " + opponentName + " both scored " + playerScore + " points.");
 					}
 				} else if (args[1].equals(Protocol.Server.ABORTED)) {
 					print("");
-					print("The game was aborted because the server or your opponent "
-							+ "has disconnected.");
+					print("The game was aborted because someone has stopped the game.");
 					print("You scored " + playerScore + " points this game.");
 				} else if (args[1].equals(Protocol.Server.TIMEOUT)) {
 					print("");
 					print("Someone did not respond in time.");
 					print("You scored " + playerScore + " points this game.");
-				} else {
-					// Should not happen
 				}
-	
+				
 				game = null;
 	
 				print("");
@@ -334,10 +326,9 @@ public class ServerHandler {
 	 */
 	public void sendVersion() {
 		String message = Protocol.Client.NAME + Protocol.General.DELIMITER1 + client.getName()
-				+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 
-				+ Protocol.Client.VERSIONNO + Protocol.General.DELIMITER1 
-				+ Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1 + Extensions.chat 
-				+ Protocol.General.DELIMITER1 + Extensions.challenge + Protocol.General.DELIMITER1
+				+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 + Protocol.Client.VERSIONNO
+				+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1
+				+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge + Protocol.General.DELIMITER1
 				+ Extensions.leaderboard + Protocol.General.DELIMITER1 + Extensions.security
 				+ Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1
 				+ Extensions.simultaneous + Protocol.General.DELIMITER1 + Extensions.multimoves;
@@ -359,7 +350,7 @@ public class ServerHandler {
 			if (option == 1) {
 				sendRequest();
 				optionOK = true;
-			} else if (option == 2 || option == -1) {
+			} else if (option == 2 || option == -2 || option == -1) {
 				send(Protocol.Client.EXIT);
 				shutDown();
 				optionOK = true;
@@ -379,25 +370,40 @@ public class ServerHandler {
 		while (!optionOK) {
 			int option = client.readInt("Choose an option");
 			if (option == -1) {
-				// EXIT: Request has not yet been send, so only quiting the program is enough.
+				// QUIT: Request has not yet been send, so only quiting the program is enough.
 				showMainMenu();
+				return;
+			} else if (option == -2) {
+				// EXIT:
+				shutDown();
 				return;
 			} else if (option == 1) {
 				player = new HumanPlayer(this);
 				optionOK = true;
 			} else if (option == 2) {
-				boolean inputOK = false;
+
 				int reactionTimeAI = askReactionTime();
-				player = new ComputerPlayer(this, reactionTimeAI);
-				optionOK = true;
+				if (reactionTimeAI == -1) {
+					// QUIT
+					showMainMenu();
+					return;
+				} else if (reactionTimeAI == -2) {
+					// EXIT
+					shutDown();
+					return;
+				} else {
+					player = new ComputerPlayer(this, reactionTimeAI);
+					optionOK = true;
+				}
+
 			} else {
 				print("This is an invalid option. Try again.");
 			}
 		}
 		setPlayer(player);
 
-		String message = Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 
-				+ Protocol.General.DELIMITER1 + Protocol.Client.RANDOM;
+		String message = Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 + Protocol.General.DELIMITER1
+				+ Protocol.Client.RANDOM;
 		send(message);
 		print("Game requested. Wait for other players to connect...");
 	}
@@ -408,11 +414,14 @@ public class ServerHandler {
 
 		boolean optionOK = false;
 		while (!optionOK) {
-			int seconds = readInt("Within how many seconds should the computer "
-					+ "have determined a move?");
+			int seconds = readInt("Within how many seconds should the computer " + "have determined a move?");
 			if (seconds == -1) {
-				// EXIT: Request has not yet been send, so only quiting the program is enough.
+				// QUIT
 				reactionTime = -1;
+				optionOK = true;
+			} else if (seconds == -2) {
+				// EXIT
+				reactionTime = -2;
 				optionOK = true;
 			} else if (seconds > 0) {
 				reactionTime = seconds;
@@ -429,12 +438,17 @@ public class ServerHandler {
 		boolean colorOK = false;
 		String colorString = "";
 		while (!colorOK) {
-			int colorInt = client.readInt("What color do you want to play with? "
-					+ "(1 - BLACK, 2 - WHITE)");
+			int colorInt = client.readInt("What color do you want to play with? " + "(1 - BLACK, 2 - WHITE)");
 			colorString = "";
 			if (colorInt == -1) {
+				// QUIT
 				sendQuit();
 				showMainMenu();
+				return;
+			} else if (colorInt == -2) {
+				//  EXIT
+				sendQuit();
+				shutDown();
 				return;
 			} else if (colorInt == 1) {
 				colorString = Protocol.General.BLACK;
@@ -452,15 +466,20 @@ public class ServerHandler {
 		while (!boardsizeOK) {
 			int minBoardsize = 5;
 			int maxBoardsize = 19;
-			boardSize = client.readInt("What do you want to be the size of the board? "
-					+ "(Integer between " + minBoardsize	+ " - " + maxBoardsize + ")");
+			boardSize = client.readInt("What do you want to be the size of the board? " + "(Integer between "
+					+ minBoardsize + " - " + maxBoardsize + ")");
 			if (boardSize == -1) {
+				// QUIT
 				sendQuit();
 				showMainMenu();
 				return;
+			} else if (boardSize == -2) {
+				// EXIT
+				sendQuit();
+				shutDown();
+				return;
 			} else if ((boardSize < minBoardsize) || (boardSize > maxBoardsize)) {
-				print("This is not a valid input. Enter an integer between " + minBoardsize 
-						+ " and " + maxBoardsize
+				print("This is not a valid input. Enter an integer between " + minBoardsize + " and " + maxBoardsize
 						+ ".");
 			} else {
 				boardsizeOK = true;

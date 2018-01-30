@@ -12,24 +12,25 @@ import model.*;
  */
 public class GameController {
 
+	private GameServer gameServer;
+	private TimeoutTimer timeoutTimer;
 	private int numberPlayers = 2;
 	private ClientHandler[] players;
 	private String[] playerColor;
 	private Token[] playerToken;
 	private int currentPlayer = -1;
-	private long startTime;
 	private Board board;
 	private int passes;
 	private int moves;
-	private boolean isRunning;
 	
-	public GameController(ClientHandler ch1, ClientHandler ch2) {
+	public GameController(GameServer gameServer, ClientHandler ch1, ClientHandler ch2) {
+		this.gameServer = gameServer;
+		this.timeoutTimer = new TimeoutTimer(this);
 		this.players = new ClientHandler[numberPlayers];
 		this.playerColor = new String[numberPlayers];
 		this.playerToken = new Token[numberPlayers];
 		this.players[0] = ch1;
 		this.players[1] = ch2;
-		isRunning = true;
 	}
 	
 	// STARTERS & STOPPERS ==========================================================
@@ -43,27 +44,6 @@ public class GameController {
 		
 		// Send the first player the START command and request color and boardsize
 		players[0].sendRequestSettings();
-	}
-	
-	public void startGame() {
-		new Thread(new Runnable() { 
-			public void run() {
-				while (isRunning) {
-					System.out.print("check");
-					if ((System.currentTimeMillis() - startTime)/1000 > Protocol.General.TIMEOUTSECONDS) {
-						sendEnd(Protocol.Server.TIMEOUT);
-					}
-				}
-			} 
-		});
-	}
-	
-	public void shutDown() {
-		isRunning = false;
-	}
-	
-	public void setTime() {
-		startTime = System.currentTimeMillis();
 	}
 	
 	// GETTERS & SETTERS ==============================================================
@@ -171,6 +151,14 @@ public class GameController {
 		return board.getScore(playerToken[playerNo]);
 	}
 	
+	public void timeout() {
+		sendEndGame(Protocol.Server.TIMEOUT, currentPlayer);
+	}
+	
+	public void resetTimer() {
+		timeoutTimer.resetTimer();
+	}
+	
 	// MISCELLANEOUS METHODS ========================================================
 	/**
 	 * Return the color that if the opposite of the one that was entered.
@@ -191,6 +179,7 @@ public class GameController {
 		players[1].sendStart(numberPlayers, playerColor[1], board.getDIM(), players[currentPlayer].getName(), players[Math.abs(currentPlayer-1)].getName());
 		
 		players[currentPlayer].sendFirst();
+		new Thread(timeoutTimer).start();
 	}
 	
 	/**
@@ -212,8 +201,11 @@ public class GameController {
 	/**
 	 * Send to players when the game has ended.
 	 */
-	public void sendEnd(String reason) {
-		players[0].sendEndGame(reason, -1);
-		players[1].sendEndGame(reason, -1);
+	public void sendEndGame(String reason, int responsiblePlayer) {
+		players[0].sendEndGame(reason, responsiblePlayer);
+		players[1].sendEndGame(reason, responsiblePlayer);
+		players[0].endGame();
+		players[1].endGame();
+		gameServer.removeGame(this);
 	}
 }

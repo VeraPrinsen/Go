@@ -56,6 +56,10 @@ public class GameServer implements Runnable {
 		}
 	}
 	
+	public void removeGame(GameController game) {
+		this.games.remove(game);
+	}
+	
 	/**
 	 * The GameServer checks the size of the lobby constantly and if there are 2 or more players, make a new game for the first 2 players. (default, with extension, this could be different)
 	 */
@@ -70,7 +74,7 @@ public class GameServer implements Runnable {
 					ClientHandler player2 = lobby.get(1);
 					removeFromLobby(player1);
 					removeFromLobby(player2);
-					GameController newgame = new GameController(player1, player2);
+					GameController newgame = new GameController(this, player1, player2);
 					games.add(newgame);
 					newgame.setup();
 				}

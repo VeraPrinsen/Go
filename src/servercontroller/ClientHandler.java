@@ -7,6 +7,8 @@ import java.io.BufferedWriter;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * ClientHandler starts the threads for receiving and sending information from
@@ -30,10 +32,11 @@ public class ClientHandler {
 	private GameController game = null;
 	private ClientHandler opponent;
 	private int playerNo = -1;
-	
+
+	private boolean hasName = false;
 	private boolean inLobby = false;
-	private boolean inGame = false;
-	private boolean isBoard = false;
+
+	private Lock moveLock = new ReentrantLock();
 
 	public ClientHandler(Server server, Socket sock, BufferedReader in, BufferedWriter out) {
 		this.server = server;
@@ -63,7 +66,7 @@ public class ClientHandler {
 		sendVersion();
 	}
 
-	public void shutDown() {		
+	public void shutDown() {
 		server.removeFromClients(this);
 		try {
 			sock.close();
@@ -74,11 +77,12 @@ public class ClientHandler {
 		}
 	}
 
-	// GETTERS & SETTERS ========================================================================
+	// GETTERS & SETTERS
+	// ========================================================================
 	public String getName() {
 		return this.clientName;
 	}
-	
+
 	public ClientHandler getOpponent() {
 		return opponent;
 	}
@@ -87,7 +91,17 @@ public class ClientHandler {
 		return this.game;
 	}
 
-	// METHODS FOR PLAYING THE GAME =================================================== $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+	public void setInLobby(boolean bool) {
+		this.inLobby = bool;
+	}
+	
+	public int getPlayerNo() {
+		return this.playerNo;
+	}
+
+	// METHODS FOR PLAYING THE GAME
+	// ===================================================
+	// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 	/**
 	 * Start a game for this particular client. game is the game object that is
 	 * used. player says if the player was the first (0) or second (1) in the game.
@@ -106,7 +120,8 @@ public class ClientHandler {
 		this.game = null;
 	}
 
-	// INPUT PROCESSORS ================================================================
+	// INPUT PROCESSORS
+	// ================================================================
 	/**
 	 * This is what is done with the input from this particular client.
 	 */
@@ -117,20 +132,19 @@ public class ClientHandler {
 		switch (args[0]) {
 			case Protocol.Client.NAME:
 				clientName = args[1];
-				
+	
 				int equalNames = 0;
 				for (ClientHandler c : server.getClients()) {
 					if (clientName.equals(c.getName())) {
 						equalNames++;
 					}
-					
+	
 					if (equalNames > 1) {
-						sendError(Protocol.Server.NAMETAKEN, 
-								"This name is already used. Choose another one.");
+						sendError(Protocol.Server.NAMETAKEN, "This name is already used. Choose another one.");
 						return;
 					}
 				}
-				
+	
 				try {
 					clientVersionNo = Integer.parseInt(args[3]);
 					clientExtensions[0] = Integer.parseInt(args[5]);
@@ -141,60 +155,62 @@ public class ClientHandler {
 					clientExtensions[5] = Integer.parseInt(args[10]);
 					clientExtensions[6] = Integer.parseInt(args[11]);
 				} catch (NumberFormatException e) {
-					sendError(Protocol.Server.UNKNOWN, "In the NAME command, "
-							+ "integers are expected for the versionnumber and all extensions.");
+					sendError(Protocol.Server.UNKNOWN,
+							"In the NAME command, " + "integers are expected for the versionnumber and all extensions.");
 					shutDown();
 					server.removeFromClients(this);
 					return;
 				}
-				
+	
 				if (clientVersionNo != Protocol.Server.VERSIONNO) {
-					sendError(Protocol.Server.INCOMPATIBLEPROTOCOL, 
-							"The server runs protocol version " + Protocol.Server.VERSIONNO 
-							+ ". This is not compatible with your version no. " 
-									+ clientVersionNo + ".");
+					sendError(Protocol.Server.INCOMPATIBLEPROTOCOL,
+							"The server runs protocol version " + Protocol.Server.VERSIONNO
+									+ ". This is not compatible with your version no. " + clientVersionNo + ".");
 					shutDown();
 					return;
 				}
-				
+	
 				print("[" + clientName + " has entered]");
+				hasName = true;
 				break;
 	
 			case Protocol.Client.REQUESTGAME:
-				server.getGameServer().addToLobby(this);
-				inLobby = true;
-				
+				if (hasName) {
+					server.getGameServer().addToLobby(this);
+					inLobby = true;
+				} else {
+					sendError(Protocol.Server.OTHER, "First a NAME command is expected before you can play a game.");
+				}
 				break;
 	
 			case Protocol.Client.SETTINGS:
 				if (inLobby) {
 					String colorString = args[1];
 					int boardSize = Integer.parseInt(args[2]);
-		
+	
 					game.setBoard(boardSize);
 					game.setColors(this, colorString);
-					game.sendStart();		
-					game.startGame();
-					
-					inGame = true;
-					isBoard = true;
-					break;
+					game.sendStart();
+					// game.startGame();
+					inLobby = false;
 				} else {
 					sendError(Protocol.Server.ERROR, "Cannot send SETINGS if you have not requested a game yet.");
 				}
-				
+				break;
 	
 			case Protocol.Client.MOVE:
+				moveLock.lock(); // to prevent a player to send multiple moves to cheat the game..
+	
 				if (!((game == null) || (game.getCurrentPlayer() != playerNo))) {
 					game.setCurrentPlayer(Math.abs(playerNo - 1));
+					game.resetTimer();
 					
 					if (args[1].equals(Protocol.Client.PASS)) {
 						game.makePass(playerNo);
-						
+	
 						if (game.gameOver()) {
-							// GAME OVER
 							game.setCurrentPlayer(-1);
-							game.sendEnd(Protocol.Server.FINISHED);
+							game.sendEndGame(Protocol.Server.FINISHED, 2);
 						}
 					} else {
 						String[] coordinates = args[1].split(Protocol.General.DELIMITER2);
@@ -204,16 +220,14 @@ public class ClientHandler {
 							x = Integer.parseInt(coordinates[0]);
 							y = Integer.parseInt(coordinates[1]);
 							game.makeMove(x, y, playerNo);
-							
+	
 							if (game.gameOver()) {
-								// GAME OVER
 								game.setCurrentPlayer(-1);
-								game.sendEnd(Protocol.Server.FINISHED);
+								game.sendEndGame(Protocol.Server.FINISHED, 2);
 							}
 						} catch (NumberFormatException e) {
 							game.setCurrentPlayer(playerNo);
-							sendError(Protocol.Server.INVALID, 
-									"Invalid coordinates, they should be integers.");
+							sendError(Protocol.Server.INVALID, "Invalid coordinates, they should be integers.");
 						}
 					}
 				} else {
@@ -223,8 +237,10 @@ public class ClientHandler {
 						sendError(Protocol.Server.INVALID, "It is not your turn.");
 					} else {
 						sendError(Protocol.Server.INVALID, "Invalid move.");
-					}	
+					}
 				}
+	
+				moveLock.unlock();
 	
 				break;
 	
@@ -240,6 +256,7 @@ public class ClientHandler {
 					opponent.endGame();
 					this.endGame();
 					server.getGameServer().addToLobby(opponent);
+					opponent.setInLobby(true);
 				} else {
 					// Client is in game, and it is started. Opponent needs to be informed.
 					opponent.sendEndGame(Protocol.Server.ABORTED, playerNo);
@@ -247,14 +264,14 @@ public class ClientHandler {
 					opponent.endGame();
 					this.endGame();
 				}
-				
-				// If EXIT, also shutDown client
+	
+				// If EXIT, also shutDown this client
 				if (args[0].equals(Protocol.Client.EXIT)) {
 					shutDown();
-					server.removeFromClients(this);
 				}
+	
 				break;
-				
+	
 			default:
 				print(msg);
 				break;
@@ -262,7 +279,8 @@ public class ClientHandler {
 
 	}
 
-	// PRINTERS & SENDERS ============================================================
+	// PRINTERS & SENDERS
+	// ============================================================
 	/**
 	 * Method called to print information on the console of the server.
 	 */
@@ -285,33 +303,33 @@ public class ClientHandler {
 	}
 
 	/**
-	 * method that constructs and sends the NAME command, format: NAME <String
-	 * serverName> VERSION <int versionNo> EXTENSIONS 0 0 0 0 0 0 0
+	 * method that constructs and sends the NAME command. 
+	 * format: NAME <String serverName> VERSION <int versionNo> EXTENSIONS 0 0 0 0 0 0 0
 	 */
 	public void sendVersion() {
 		String message = Protocol.Server.NAME + Protocol.General.DELIMITER1 + server.getName()
 				+ Protocol.General.DELIMITER1 + Protocol.Server.VERSION + Protocol.General.DELIMITER1
 				+ Protocol.Server.VERSIONNO + Protocol.General.DELIMITER1 + Protocol.Server.EXTENSIONS
 				+ Protocol.General.DELIMITER1 + Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge
-				+ Protocol.General.DELIMITER1 + Extensions.leaderboard + Protocol.General.DELIMITER1 + Extensions.security
-				+ Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1 + Extensions.simultaneous
-				+ Protocol.General.DELIMITER1 + Extensions.multimoves;
+				+ Protocol.General.DELIMITER1 + Extensions.leaderboard + Protocol.General.DELIMITER1
+				+ Extensions.security + Protocol.General.DELIMITER1 + Extensions.multiplayer
+				+ Protocol.General.DELIMITER1 + Extensions.simultaneous + Protocol.General.DELIMITER1
+				+ Extensions.multimoves;
 		send(message);
 	}
 
 	/**
-	 * method that constructs and sends the ERROR command
-	 * format: ERROR <String typeOfError> <String errorMessage>
-	 * typeOfError can be:
+	 * method that constructs and sends the ERROR command. 
+	 * format: ERROR <String typeOfError> <String errorMessage> 
+	 * typeOfError can be: 
 	 * 		UNKNOWNCOMMAND
-	 * 		INVALIDMOVE
-	 * 		NAMETAKEN
-	 * 		INCOMPATIBLEPROTOCOL
+	 * 		INVALIDMOVE 
+	 * 		NAMETAKEN 
+	 * 		INCOMPATIBLEPROTOCOL 
 	 * 		OTHER
 	 */
 	public void sendError(String error, String errorMessage) {
-		String message = Protocol.Server.ERROR + Protocol.General.DELIMITER1 + error + Protocol.General.DELIMITER1
-				+ errorMessage;
+		String message = Protocol.Server.ERROR + Protocol.General.DELIMITER1 + error + Protocol.General.DELIMITER1 + errorMessage;
 		send(message);
 	}
 
@@ -341,45 +359,50 @@ public class ClientHandler {
 	 * format: TURN <String firstPlayer> FIRST <String firstPlayer>
 	 */
 	public void sendFirst() {
-		
+
 		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1
 				+ Protocol.Server.FIRST + Protocol.General.DELIMITER1 + clientName;
 		send(message);
 	}
 
 	/**
-	 * Method that constructs and sends the TURN command to the next player (and the move that is done by the current player).
-	 * format: TURN <String opponent / previousPlayer> x_y <String clientName / nextPlayer>
+	 * Method that constructs and sends the TURN command to the next player (and the
+	 * move that is done by the current player). format: TURN <String opponent /
+	 * previousPlayer> x_y <String clientName / nextPlayer>
 	 */
 	public void sendMove(int x, int y) {
-		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + opponent.getName() + Protocol.General.DELIMITER1 + x
-				+ Protocol.General.DELIMITER2 + y + Protocol.General.DELIMITER1 + clientName;
-		send(message);
-	}
-	
-	/**
-	 * Method that constructs and sends the TURN command to the previous player (and the VALID move that is done by this player).
-	 * format: TURN <String clientName / previousPlayer> x_y <String opponent / nextPlayer>
-	 */
-	public void sendValidMove(int x, int y) {
-		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1 + x
-				+ Protocol.General.DELIMITER2 + y + Protocol.General.DELIMITER1 + opponent.getName();
+		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + opponent.getName()
+				+ Protocol.General.DELIMITER1 + x + Protocol.General.DELIMITER2 + y + Protocol.General.DELIMITER1
+				+ clientName;
 		send(message);
 	}
 
 	/**
-	 * Method that constructs and sends to the next player that the previous player passed.
-	 * format: TURN <String opponent / previousPlayer> PASS <String clientName / nextPlayer>
+	 * Method that constructs and sends the TURN command to the previous player (and
+	 * the VALID move that is done by this player). format: TURN <String clientName
+	 * / previousPlayer> x_y <String opponent / nextPlayer>
 	 */
-	public void sendPass() {
-		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + opponent.getName() + Protocol.General.DELIMITER1
-				+ Protocol.Server.PASS + Protocol.General.DELIMITER1 + clientName;
+	public void sendValidMove(int x, int y) {
+		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1
+				+ x + Protocol.General.DELIMITER2 + y + Protocol.General.DELIMITER1 + opponent.getName();
 		send(message);
 	}
-	
+
 	/**
-	 * Method that constructs and sends to the previous player that his pass is accepted.
-	 * format: TURN <String clientName / previousPlayer> PASS <String opponent / nextPlayer>
+	 * Method that constructs and sends to the next player that the previous player
+	 * passed. format: TURN <String opponent / previousPlayer> PASS <String
+	 * clientName / nextPlayer>
+	 */
+	public void sendPass() {
+		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + opponent.getName()
+				+ Protocol.General.DELIMITER1 + Protocol.Server.PASS + Protocol.General.DELIMITER1 + clientName;
+		send(message);
+	}
+
+	/**
+	 * Method that constructs and sends to the previous player that his pass is
+	 * accepted. format: TURN <String clientName / previousPlayer> PASS <String
+	 * opponent / nextPlayer>
 	 */
 	public void sendValidPass() {
 		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1
@@ -388,17 +411,18 @@ public class ClientHandler {
 	}
 
 	/**
-	 * Method that constructs and sends the command that the game has ended, why it has ended and the end scores.
-	 * format: ENDGAME <String reason> <String winningPlayer> <int score> <String losingPlayer> <int score>
-	 * reason can be:
-	 * 		- FINISHED (game has finished because both players passed after each other).
-	 * 		- ABORTED (someone (server or client) has left the game and therefore the game stopped).
-	 * 		- TIMEOUT (the currentPlayer did not make a move within the TIMEOUT time).
+	 * Method that constructs and sends the command that the game has ended, why it
+	 * has ended and the end scores. 
+	 * format: ENDGAME <String reason> <String winningPlayer> <int score> <String losingPlayer> <int score> 
+	 * reason can be: 
+	 * 		FINISHED (game has finished because both players passed after each other)
+	 * 		ABORTED (someone (server or client) has left the game and therefore the game stopped) 
+	 * 		TIMEOUT (the currentPlayer did not make a move within TIMEOUT seconds)
 	 */
 	public void sendEndGame(String reason, int responsiblePlayer) {
 		int scorePlayer = 0;
 		int scoreOpponent = 0;
-		
+
 		if (reason.equals(Protocol.Server.FINISHED)) {
 			scorePlayer = game.score(playerNo);
 			scoreOpponent = game.score(Math.abs(playerNo - 1));
@@ -411,14 +435,11 @@ public class ClientHandler {
 				// opponent aborted
 				scorePlayer = game.score(playerNo);
 				scoreOpponent = 0;
-			} else if (responsiblePlayer == 2) {
+			} else {
 				// Server aborted
 				scorePlayer = game.score(playerNo);
 				scoreOpponent = game.score(Math.abs(playerNo - 1));
-			} else {
-				scorePlayer = game.score(playerNo);
-				scoreOpponent = game.score(Math.abs(playerNo - 1));
-			}
+			} 
 		} else if (reason.equals(Protocol.Server.TIMEOUT)) {
 			if (responsiblePlayer == playerNo) {
 				// this player has timed out
@@ -429,20 +450,28 @@ public class ClientHandler {
 				scorePlayer = game.score(playerNo);
 				scoreOpponent = 0;
 			} else {
-				
-			}
+				// Should not happen
+				scorePlayer = game.score(playerNo);
+				scoreOpponent = game.score(Math.abs(playerNo - 1));
+			} 
 		} else {
-			
+			// Should not happen
+			scorePlayer = game.score(playerNo);
+			scoreOpponent = game.score(Math.abs(playerNo - 1));
 		}
-				
+
 		// ENDGAME reden WINSPELER score VERLIESSPELER score
 		String message;
 		if (scorePlayer > scoreOpponent) {
-			message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1 + scorePlayer + Protocol.General.DELIMITER1 + opponent.getName() + Protocol.General.DELIMITER1 + scoreOpponent;
-		} else  {
-			message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason + Protocol.General.DELIMITER1 + opponent.getName() + Protocol.General.DELIMITER1 + scoreOpponent + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1 + scorePlayer;
+			message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason + Protocol.General.DELIMITER1
+					+ clientName + Protocol.General.DELIMITER1 + scorePlayer + Protocol.General.DELIMITER1
+					+ opponent.getName() + Protocol.General.DELIMITER1 + scoreOpponent;
+		} else {
+			message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason + Protocol.General.DELIMITER1
+					+ opponent.getName() + Protocol.General.DELIMITER1 + scoreOpponent + Protocol.General.DELIMITER1
+					+ clientName + Protocol.General.DELIMITER1 + scorePlayer;
 		}
-		
+
 		send(message);
 	}
 }

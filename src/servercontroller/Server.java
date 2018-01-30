@@ -102,7 +102,7 @@ public class Server {
 
 	public void removeFromClients(ClientHandler ch) {
 		if (ch.getGame() != null) {
-			ch.getGame().sendEnd(Protocol.Server.ABORTED); 
+			ch.getGame().sendEndGame(Protocol.Server.ABORTED, ch.getPlayerNo());
 		}
 		
 		if (ch.getName() != null) {
@@ -125,8 +125,7 @@ public class Server {
 		List<GameController> games = gameServer.getGames();
 		for (GameController gc : games) {
 			if (gc.getBoard() != null) {
-				gc.sendEnd(Protocol.Server.ABORTED);
-				gc.shutDown();
+				gc.sendEndGame(Protocol.Server.ABORTED, 2);
 			}
 		}
 		

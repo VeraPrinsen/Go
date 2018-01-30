@@ -66,14 +66,17 @@ public class ClientTUI implements Runnable {
 		String msg;
 		try {
 			System.out.print(prompt + ": ");
-			if ((msg = in.readLine()).equalsIgnoreCase("exit")) {
+			msg = in.readLine();
+			if (msg.equalsIgnoreCase("exit")) {
+				return Protocol.Client.EXIT;
+			} else if (msg.equalsIgnoreCase("quit")) {
 				return Protocol.Client.QUIT;
 			} else {
 				return msg;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-			return Protocol.Client.QUIT;
+			return Protocol.Client.EXIT;
 		}
 	}
 
@@ -90,6 +93,9 @@ public class ClientTUI implements Runnable {
 				
 				if (inputString.equals(Protocol.Client.QUIT)) {
 					input = -1;
+					inputOK = true;
+				} else if (inputString.equals(Protocol.Client.EXIT)) {
+					input = -2;
 					inputOK = true;
 				} else {
 					input = Integer.parseInt(inputString);
