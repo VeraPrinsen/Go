@@ -167,11 +167,7 @@ public class ServerHandler {
 						game.setPass();
 						print("Opponent has passed.");
 	
-						if (game.gameOver()) {
-							// als 2x gepasst, gameOver() en server should send the score.
-							print("GAME OVER!");
-						} else {
-							// Clients turn
+						if (!game.gameOver()) {
 							player.sendMove();
 						}
 					}
@@ -187,8 +183,9 @@ public class ServerHandler {
 						// Server informes us that our opponent has played the following valid move:
 						game.setMovePlayer(x, y, false);
 	
-						// And that it is the clients turn
-						player.sendMove();
+						if (!game.gameOver()) {
+							player.sendMove();
+						}
 					}
 				}
 	

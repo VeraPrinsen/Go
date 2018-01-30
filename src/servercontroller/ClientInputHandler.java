@@ -33,7 +33,7 @@ public class ClientInputHandler implements Runnable {
 		String msg;
 		try {
 			while (isOpen && (msg = in.readLine()) != null) {
-				Thread newInput = new Thread(new ClientInputProcessor(ch, msg));
+				Thread newInput = new Thread(new ClientInputProcessor(ch, msg), "ClientInputProcessor");
 				newInput.setDaemon(true);
 				newInput.start();
 			}

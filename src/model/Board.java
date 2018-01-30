@@ -150,6 +150,17 @@ public class Board {
 			gui = null;
 		}
 	}
+	
+	public List<Field> getEmptyFields() {
+		List<Field> emptyFields = new ArrayList<>();
+		for (int i = 0; i < dim * dim; i++) {
+			if (board[i].getToken().equals(Token.EMPTY)) {
+				emptyFields.add(board[i]);
+			}
+		}
+		
+		return emptyFields;		
+	}
 
 	// MISCELLANEOUS METHODS
 	// ==============================================================
@@ -167,7 +178,7 @@ public class Board {
 	/**
 	 * Makes a copy of the current Field[] board.
 	 */
-	private Field[] fieldCopy() {
+	public Field[] fieldCopy() {
 		Field[] newfield = new Field[board.length];
 		for (int i = 0; i < board.length; i++) {
 			newfield[i] = new Field(board[i].getX(), board[i].getY());
@@ -176,7 +187,7 @@ public class Board {
 		return newfield;
 	}
 	
-	private String fieldString() {
+	public String fieldString() {
 		String s = "";
 		for (Field f : board) {
 			s = s + f.getToken();
@@ -291,9 +302,23 @@ public class Board {
 	
 	public boolean canBeCaptured(Token t) {
 		for (Group g : groups) {
-			String outcome = g.canCapture(t.other());
-			if (!outcome.equals("false")) {
-				return true;
+			if (g.getToken().equals(t)) {
+				String outcome = g.canCapture();
+				if (!outcome.equals("false")) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	// Only for Empty groups, if isCaptured by token t
+	public boolean emptyIsCaptured(Token t) {
+		for (Group g : groups) {
+			if (g.getToken().equals(Token.EMPTY)) {
+				if (g.isCaptured(t)) {
+					return true;
+				}
 			}
 		}
 		return false;

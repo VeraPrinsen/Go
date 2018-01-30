@@ -7,26 +7,34 @@ public class TimeoutTimer implements Runnable {
 	private GameController game;
 	private long startTime;
 	private long endTime;
+	private boolean gameRunning;
 	
 	public TimeoutTimer(GameController game) {
 		this.game = game;
+		gameRunning = true;
 		resetTimer();
 	}
 	
 	public void run() {
-		while (System.currentTimeMillis() < endTime) {
+		while (System.currentTimeMillis() < endTime && gameRunning) {
 			try {
 				Thread.sleep(100L);
 			} catch (InterruptedException e) {
 				
 			}
 		}
-		game.timeout();
+		if (gameRunning) {
+			game.timeout();
+		}
 	}
 	
 	public void resetTimer() {
 		this.startTime = System.currentTimeMillis();
 		this.endTime = startTime + Protocol.General.TIMEOUTSECONDS * 1000L;
+	}
+	
+	public void stopGame() {
+		gameRunning = false;
 	}
 
 }

@@ -94,7 +94,7 @@ public class Server {
 					print("Regular Exception occured.");
 				}
 			}
-		});
+		}, "CheckForClients");
 		
 		listener.setDaemon(true);
 		listener.start();		

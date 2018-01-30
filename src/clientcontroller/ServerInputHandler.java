@@ -29,7 +29,7 @@ public class ServerInputHandler implements Runnable {
 		String msg;
 		try {
 			while (isOpen && (msg = in.readLine()) != null) {
-				Thread newInput = new Thread(new ServerInputProcessor(sh, msg));
+				Thread newInput = new Thread(new ServerInputProcessor(sh, msg), "ServerInputProcessor");
 				newInput.setDaemon(true);
 				newInput.start();
 			}

@@ -342,7 +342,7 @@ public class GOGUIImpl extends Application {
     }
 
     protected static void startGUI() {
-        new Thread() {
+        new Thread("GUI") {
             public void run() {
                 Application.launch(GOGUIImpl.class);
             }

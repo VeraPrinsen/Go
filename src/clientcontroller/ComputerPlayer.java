@@ -16,7 +16,7 @@ public class ComputerPlayer implements Player {
 
 	public ComputerPlayer(ServerHandler sh, int reactionTimeAI) {
 		this.sh = sh;
-		strategy = new SmartStrategy(this, reactionTimeAI);
+		strategy = new SmarterStrategy(this, reactionTimeAI);
 	}
 
 	public void setGame(Game game) {

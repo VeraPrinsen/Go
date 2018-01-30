@@ -58,7 +58,7 @@ public class Group {
 		return isCaptured;
 	}
 	
-	public String canCapture(Token t) {
+	public String canCapture() {
 		List<Field> emptyFields = new ArrayList<>();
 
 		for (Field f : perimeterFields) {

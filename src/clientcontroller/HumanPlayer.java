@@ -15,7 +15,7 @@ public class HumanPlayer implements Player {
 	public HumanPlayer(ServerHandler sh) {
 		this.sh = sh;
 		game = null;
-		hintStrategy = new SmartStrategy(this, 1);
+		hintStrategy = new RandomStrategy(this, 1);
 	}
 	
 	public void setGame(Game game) {

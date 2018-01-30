@@ -179,7 +179,7 @@ public class GameController {
 		players[1].sendStart(numberPlayers, playerColor[1], board.getDIM(), players[currentPlayer].getName(), players[Math.abs(currentPlayer-1)].getName());
 		
 		players[currentPlayer].sendFirst();
-		new Thread(timeoutTimer).start();
+		new Thread(timeoutTimer, "TimeoutTimer").start();
 	}
 	
 	/**
@@ -206,6 +206,7 @@ public class GameController {
 		players[1].sendEndGame(reason, responsiblePlayer);
 		players[0].endGame();
 		players[1].endGame();
+		timeoutTimer.stopGame();
 		gameServer.removeGame(this);
 	}
 }
