@@ -101,7 +101,7 @@ public class Server {
 	}
 
 	public void removeFromClients(ClientHandler ch) {
-		if (ch.getGame() != null) {
+		if (ch.getGame() != null && ch.getGame().getBoard() != null) {
 			ch.getGame().sendEndGame(Protocol.Server.ABORTED, ch.getPlayerNo());
 		}
 		

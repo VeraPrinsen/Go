@@ -128,10 +128,12 @@ public class GameController {
 			validMove = board.checkMove(x, y, playerToken[playerNo]);
 		} catch (InvalidCoordinateException e) {
 			players[playerNo].sendError(Protocol.Server.INVALID, e.getMessage());
+			currentPlayer = playerNo;
 		}
 	
 		if (validMove) {
 			moves--;
+			passes = 0;
 			board.setField(x, y, playerToken[playerNo]);
 			sendMove(x, y, playerNo);
 		}

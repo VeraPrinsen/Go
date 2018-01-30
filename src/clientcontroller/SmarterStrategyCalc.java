@@ -2,6 +2,7 @@ package clientcontroller;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import boardview.InvalidCoordinateException;
 import model.Board;
@@ -59,8 +60,6 @@ public class SmarterStrategyCalc implements Runnable {
 			bestStrategy = "random / pass";
 		}
 
-		System.out.println("Random finished.");
-
 		// ===============================================================================
 		//
 		// Then: A few strategy tactics from most important to least important
@@ -82,8 +81,6 @@ public class SmarterStrategyCalc implements Runnable {
 				}
 			}
 		}
-
-		System.out.println("Pass finished.");
 
 		// ===============================================================================
 		// If a group of the other token can be captured, do this (capture the largest
@@ -123,8 +120,6 @@ public class SmarterStrategyCalc implements Runnable {
 			}
 		}
 
-		System.out.println("Capture finished.");
-
 		// ===============================================================================
 		// Prevent the opponent from capturing a group
 		// ===============================================================================
@@ -161,83 +156,87 @@ public class SmarterStrategyCalc implements Runnable {
 			}
 		}
 
-		System.out.println("Prevent capture finished.");
-
-		// ===============================================================================
-		// First remove non-valid moves from the emptyFields list
-		// ===============================================================================
-		if (!foundBestMove && canCalculate) {
-			Iterator<Field> iterF1 = emptyFields.iterator();
-			while (iterF1.hasNext() && canCalculate) {
-				Field f = iterF1.next();
-				int x = f.getX();
-				int y = f.getY();
-				try {
-					if (board.checkMove(x, y, playerToken)) {
-						// valid move, let it in the emptyFields list
-					}
-				} catch (InvalidCoordinateException e) {
-					iterF1.remove();
-				}
-			}
-		}
-
 		// ===============================================================================
 		// Check if you don't make a move in an empty group you already 'own'
 		// ===============================================================================
-		if (!foundBestMove && canCalculate) {
-			if (board.emptyIsCaptured(playerToken)) {
-				Iterator<Field> iterF3 = emptyFields.iterator();
-				while (iterF3.hasNext() && canCalculate) {
-					Field f = iterF3.next();
-					int x = f.getX();
-					int y = f.getY();
-					Board nextBoard = board.boardCopy();
-					nextBoard.setField(x, y, playerToken);
+		if (!foundBestMove && canCalculate && emptyFields.size() > 0) {
+			List<Group> hasAreas = board.hasAreas(playerToken);
 
-					if (board.getBoardField(x, y).getGroup().isCaptured(playerToken)) {
-						iterF3.remove();
+			for (Group g : hasAreas) {
+				Set<Field> fields = g.getGroup();
+				for (Field f : fields) {
+					emptyFields.remove(f);
+					if (!canCalculate) {
+						break;
 					}
-
-					int index = (int) Math.floor(Math.random() * emptyFields.size());
-					bestMove = emptyFields.get(index).getX() + "_" + emptyFields.get(index).getY();
-					bestStrategy = "random / not placing in owned group";
 				}
-			}
-		}
-
-		System.out.println("Random / not placing in owned group finished.");
-
-		// ===============================================================================
-		// Check if the move allows the opponent to capture you next turn
-		// ===============================================================================
-		if (!foundBestMove && canCalculate) {
-			Iterator<Field> iterF2 = emptyFields.iterator();
-			while (iterF2.hasNext() && canCalculate) {
-				Field f = iterF2.next();
-				int x = f.getX();
-				int y = f.getY();
-				Board nextBoard = board.boardCopy();
-				nextBoard.setField(x, y, playerToken);
-
-				if (nextBoard.canBeCaptured(playerToken)) {
-					iterF2.remove();
+				if (!canCalculate) {
+					break;
 				}
 			}
 
 			if (emptyFields.size() == 0 && (board.getScore(playerToken) > board.getScore(playerToken.other()))) {
 				bestMove = "pass";
+				bestStrategy = "pass";
+			} else if (emptyFields.size() != 0) {
+				boolean moveOK = false;
+				while (!moveOK) {
+					int index = (int) Math.floor(Math.random() * emptyFields.size());
+					int x = emptyFields.get(index).getX();
+					int y = emptyFields.get(index).getY();
+					try {
+						if (board.checkMove(x, y, playerToken)) {
+							bestMove = emptyFields.get(index).getX() + "_" + emptyFields.get(index).getY();
+							bestStrategy = "random / no owned group";
+							moveOK = true;
+						}
+					} catch (InvalidCoordinateException e) {
+						// invalid move
+					}
+				}
+			}
+
+		}
+
+		// ===============================================================================
+		// Check if the move allows the opponent to capture you next turn
+		// ===============================================================================
+		if (!foundBestMove && canCalculate) {
+			if (emptyFields.size() == 0 && (board.getScore(playerToken) > board.getScore(playerToken.other()))) {
+				bestMove = "pass";
 				bestStrategy = "random / no capture";
 				foundBestMove = true;
 			} else if (emptyFields.size() != 0) {
-				int index = (int) Math.floor(Math.random() * emptyFields.size());
-				bestMove = emptyFields.get(index) + "_" + emptyFields.get(index);
-				bestStrategy = "random / no capture";
-				foundBestMove = true;
+				boolean moveOK = false;
+				while (!moveOK) {
+					int index = (int) Math.floor(Math.random() * emptyFields.size());
+					int x = emptyFields.get(index).getX();
+					int y = emptyFields.get(index).getY();
+
+					Board nextBoard = board.boardCopy();
+					nextBoard.setField(x, y, playerToken);
+					try {
+						if (board.checkMove(x, y, playerToken) && !nextBoard.canBeCaptured(playerToken)) {
+							bestMove = emptyFields.get(index).getX() + "_" + emptyFields.get(index).getY();
+							bestStrategy = "random / not allowing opponent to capture you";
+							moveOK = true;
+						}
+					} catch (InvalidCoordinateException e) {
+						// invalid move
+					}
+				}
 			}
 		}
 
-		System.out.println("Random+ finished.");
+		// ===============================================================================
+		// Check if the move allows the opponent to capture you next turn
+		// ===============================================================================
+		if (!foundBestMove && canCalculate) {
+			if (board.getScore(playerToken) > (board.getScore(playerToken.other()) + (1/10) * dim * dim)) {
+				bestMove = "pass";
+				bestStrategy = "pass if you have 1/10 point more than the other player";
+			}
+		}
 	}
 
 	public String getBestMove() {

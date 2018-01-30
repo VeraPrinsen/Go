@@ -312,6 +312,20 @@ public class Board {
 		return false;
 	}
 	
+	public List<Group> hasAreas(Token t) {
+		List<Group> newlist = new ArrayList<>();
+		
+		for (Group g : groups) {
+			if (g.getToken().equals(Token.EMPTY)) {
+				if (g.isCaptured(t)) {
+					newlist.add(g);
+				}
+			}
+		}
+		
+		return newlist;
+	}
+	
 	// Only for Empty groups, if isCaptured by token t
 	public boolean emptyIsCaptured(Token t) {
 		for (Group g : groups) {

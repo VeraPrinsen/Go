@@ -183,7 +183,7 @@ public class ServerHandler {
 						// Server informes us that our opponent has played the following valid move:
 						game.setMovePlayer(x, y, false);
 	
-						if (!game.gameOver()) {
+						if (game != null && !game.gameOver()) {
 							player.sendMove();
 						}
 					}
