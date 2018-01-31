@@ -200,6 +200,18 @@ public class SmarterStrategyCalc implements Runnable {
 		}
 
 		// ===============================================================================
+		// Check if you have 1/5 of all possible points more than your opponent
+		// ===============================================================================
+		if (!foundBestMove && canCalculate) {
+			if (board.getScore(playerToken) > (board.getScore(playerToken.other()) 
+					+ (1 / 5) * dim * dim)) {
+				bestMove = "pass";
+				bestStrategy = "pass if you have 1/10 point more than the other player";
+				foundBestMove = true;
+			}
+		}
+				
+		// ===============================================================================
 		// Check if the move allows the opponent to capture you next turn
 		// ===============================================================================
 		if (!foundBestMove && canCalculate) {
@@ -232,16 +244,7 @@ public class SmarterStrategyCalc implements Runnable {
 			}
 		}
 
-		// ===============================================================================
-		// Check if the move allows the opponent to capture you next turn
-		// ===============================================================================
-		if (!foundBestMove && canCalculate) {
-			if (board.getScore(playerToken) > (board.getScore(playerToken.other()) 
-					+ (1 / 5) * dim * dim)) {
-				bestMove = "pass";
-				bestStrategy = "pass if you have 1/10 point more than the other player";
-			}
-		}
+		
 	}
 
 	public String getBestMove() {

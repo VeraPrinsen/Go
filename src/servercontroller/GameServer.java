@@ -89,6 +89,10 @@ public class GameServer implements Runnable {
 		}
 	}
 	
+	public void print(String msg) {
+		server.print(msg);
+	}
+	
 	public void shutDown() {
 		lock.lock();
 		isRunning = false;

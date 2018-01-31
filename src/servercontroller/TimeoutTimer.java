@@ -25,7 +25,6 @@ public class TimeoutTimer implements Runnable {
 		}
 		
 		if (gameRunning) {
-			System.out.println("Game is over!");
 			game.timeout();
 		}
 	}

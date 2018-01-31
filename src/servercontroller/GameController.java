@@ -229,6 +229,8 @@ public class GameController {
 		players[0].endGame();
 		players[1].endGame();
 		timeoutTimer.stopGame();
+		gameServer.print("The game between " + players[0].getName() + " and " 
+				+ players[1].getName() + " is over.");
 		gameServer.removeGame(this);
 	}
 }
