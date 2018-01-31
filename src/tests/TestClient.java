@@ -1,8 +1,6 @@
 package tests;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -11,10 +9,8 @@ import general.Extensions;
 import general.Protocol;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -23,7 +19,8 @@ public class TestClient {
 	private ServerSocket ssock;
 	private Socket sock;
 	private BufferedReader in;
-	private BufferedWriter out;
+	// If test was more extensive, this outputStream must also be used.
+	//private BufferedWriter out;
 	
 	@Before
 	public void setUp() throws IOException {
@@ -31,7 +28,7 @@ public class TestClient {
 		sock = ssock.accept();
 		
 		in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-		out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
+		//out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
 	}
 
 	@Test

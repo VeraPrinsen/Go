@@ -3,10 +3,6 @@ package netview;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import clientcontroller.Client;
 import general.Protocol;
 
 /**
@@ -15,53 +11,34 @@ import general.Protocol;
  * @author vera.prinsen
  *
  */
-public class ClientTUI implements Runnable {
-
-	private Client client;
+public class ClientTUI {
+	
 	private BufferedReader in;
-	private boolean isOpen;
 
-	public ClientTUI(Client client) {
-		this.client = client;
+	public ClientTUI() {
 		in = new BufferedReader(new InputStreamReader(System.in));
-		isOpen = true;
 	}
 
-	// THIS CHECKS FOR INPUT FROM THE CLIENT ITSELF
-	public void run() {
-		String msg;
-		try {
-			while (isOpen && (msg = in.readLine()) != null) {
-				// exitLock.unlock();
-				if (msg.equalsIgnoreCase("exit")) {
-					client.shutDown();
-				} else {
-					client.processClientInput(msg);
-				}
-				// exitLock.lock();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void print(String msg) {
-		System.out.println(msg);
-	}
-
+	// STARTERS & STOPPERS ====================================================
 	public void shutDown() {
-		isOpen = false;
 		try {
 			in.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
+	
+	// PRINTERS & SENDERS =====================================================
+	/**
+	 * Prints a message on the console of this particular client.
+	 */
+	public void print(String msg) {
+		System.out.println(msg);
+	}
 
 	/**
 	 * Method reads a String from the input console.
 	 */
-	// TO DO: EXCEPTION HANDLING
 	public String readString(String prompt) {
 		String msg;
 		try {
@@ -75,13 +52,15 @@ public class ClientTUI implements Runnable {
 				return msg;
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			// Client console is disconnected:
+			// send server that client is not available and will exit.
 			return Protocol.Client.EXIT;
 		}
 	}
 
 	/**
 	 * Method reads an integer from the input console.
+	 * 	(using readString(String prompt))
 	 */
 	public int readInt(String prompt) {
 		boolean inputOK = false;

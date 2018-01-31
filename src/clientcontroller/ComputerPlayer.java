@@ -1,24 +1,20 @@
 package clientcontroller;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import model.*;
-
+/**
+ * ComputerPlayer is a Player that determines a move automatically using a Strategy.
+ * @author vera.prinsen
+ *
+ */
 public class ComputerPlayer implements Player {
 
-	private ServerHandler sh;
 	private Game game;
 	private Strategy strategy;
 
-	public ComputerPlayer(ServerHandler sh, int reactionTimeAI) {
-		this.sh = sh;
+	public ComputerPlayer(int reactionTimeAI) {
 		strategy = new SmarterStrategy(this, reactionTimeAI);
 	}
 
+	// GETTERS & SETTERS ===================================================
 	public void setGame(Game game) {
 		this.game = game;
 	}
@@ -27,6 +23,11 @@ public class ComputerPlayer implements Player {
 		return this.game;
 	}
 
+	// GAME MECHANICS ======================================================
+	/**
+	 * When it is the ComputerPlayer it's turn, this method is called.
+	 * It will determine the best move and send it to the server.
+	 */
 	public void sendMove() {
 		String move = strategy.sendMove();
 		
@@ -36,6 +37,5 @@ public class ComputerPlayer implements Player {
 			String[] coords = move.split("_");
 			game.sendMove(Integer.parseInt(coords[0]), Integer.parseInt(coords[1]));
 		}
-		
 	}
 }

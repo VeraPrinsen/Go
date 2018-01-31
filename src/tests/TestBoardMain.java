@@ -3,7 +3,7 @@ package tests;
 import boardview.GoGUIIntegrator;
 
 /**
- * Example on how to use the GOGUI
+ * Example on how to use the GOGUI.
  *
  * @author Daan van Beek
  */
@@ -15,6 +15,8 @@ public class TestBoardMain {
         gogui.startGUI();
         gogui.setBoardSize(9);
 
+        gogui.addStone(0, 0, true);
+        
         gogui.addStone(3, 4, false);
         gogui.addStone(2, 5, false);
         gogui.addStone(4, 5, false);

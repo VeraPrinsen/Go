@@ -1,6 +1,5 @@
 package servercontroller;
 
-import boardview.GOGUI;
 import boardview.InvalidCoordinateException;
 import general.Protocol;
 import model.*;
@@ -35,7 +34,8 @@ public class GameController {
 	
 	// STARTERS & STOPPERS ==========================================================
 	/**
-	 * Before a game can start, both players have the game added to their clientHandler and the first player must choose a color and the boardsize.
+	 * Before a game can start, both players have the game added to their clientHandler 
+	 * and the first player must choose a color and the boardsize.
 	 */
 	public void setup() {
 		// Make a game for both clientHandler on this server
@@ -48,7 +48,8 @@ public class GameController {
 	
 	// GETTERS & SETTERS ==============================================================
 	/**
-	 * Set first and second player and color of the players after the first player has send their desired settings.
+	 * Set first and second player and color of the players after the first player
+	 * has send their desired settings.
 	 */
 	public void setColors(ClientHandler player, String color) {
 		if (player.equals(players[0])) {
@@ -77,10 +78,10 @@ public class GameController {
 	/**
 	 * Set the boardsize after the first player has send their desires settings.
 	 */
-	public void setBoard(int DIM) {
-		board = new Board(DIM);
+	public void setBoard(int dim) {
+		board = new Board(dim);
 		passes = 0;
-		moves = DIM * DIM;
+		moves = dim * dim;
 	}
 	
 	/**
@@ -168,17 +169,21 @@ public class GameController {
 	public String other(String color) {
 		if (color.equals(Protocol.General.BLACK)) {
 			return Protocol.General.WHITE;
-		} else
+		} else {
 			return Protocol.General.BLACK;
+		}
 	}
 	
 	// PRINTERS & SENDERS ===========================================================
 	/**
-	 * After the settings are send by the first player, this command is send to start the game for real.
+	 * After the settings are send by the first player, this command is send to start 
+	 * the game for real.
 	 */
 	public void sendStart() {
-		players[0].sendStart(numberPlayers, playerColor[0], board.getDIM(), players[currentPlayer].getName(), players[Math.abs(currentPlayer-1)].getName());
-		players[1].sendStart(numberPlayers, playerColor[1], board.getDIM(), players[currentPlayer].getName(), players[Math.abs(currentPlayer-1)].getName());
+		players[0].sendStart(numberPlayers, playerColor[0], board.getDIM(), 
+				players[currentPlayer].getName(), players[Math.abs(currentPlayer - 1)].getName());
+		players[1].sendStart(numberPlayers, playerColor[1], board.getDIM(), 
+				players[currentPlayer].getName(), players[Math.abs(currentPlayer - 1)].getName());
 		
 		players[currentPlayer].sendFirst();
 		new Thread(timeoutTimer, "TimeoutTimer").start();
@@ -189,7 +194,7 @@ public class GameController {
 	 */
 	public void sendMove(int x, int y, int playerNo) {
 		players[playerNo].sendValidMove(x, y);
-		players[Math.abs(playerNo-1)].sendMove(x, y);
+		players[Math.abs(playerNo - 1)].sendMove(x, y);
 	}
 	
 	/**
@@ -197,7 +202,7 @@ public class GameController {
 	 */
 	public void sendPass(int playerNo) {
 		players[playerNo].sendValidPass();
-		players[Math.abs(playerNo-1)].sendPass();
+		players[Math.abs(playerNo - 1)].sendPass();
 	}
 	
 	/**

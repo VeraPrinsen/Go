@@ -3,8 +3,6 @@ package netview;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-
-import general.Protocol;
 import servercontroller.Server;
 
 /**
@@ -28,34 +26,32 @@ public class ServerTUI implements Runnable {
 	/**
 	 * This method checks the input console of the server constantly.
 	 */
-	// TO DO: EXCEPTION HANDLING
 	public void run() {
 		String msg;
 		try {
-			while (isOpen && (msg = in.readLine()) != null) {
+			msg = in.readLine();
+			while (isOpen && msg != null) {
 				server.processServerInput(msg);
+				msg = in.readLine();
 			}
 		} catch (IOException e) {
-			// WHAT KIND OF EXCEPTION WILL THIS BE?
-			e.printStackTrace();
+			// inputStream will be closed, program is closing, do nothing..
 		}
 		
-		print("ServerTUI closed.");
 	}
 
 	// INPUT
 	// ====================================================================================
 	/**
-	 * ReadString from Server TUI
+	 * ReadString from Server TUI.
 	 */
-	// TO DO: EXCEPTION HANDLING
 	public String readString(String prompt) {
 		String msg = "";
 		System.out.print(prompt + ": ");
 		try {
 			msg = in.readLine();
 		} catch (IOException e) {
-			e.printStackTrace();
+			// inputStream is closed, program is closing, do nothing..
 		}
 		return msg;
 	}
@@ -64,8 +60,7 @@ public class ServerTUI implements Runnable {
 	 * Before the TUI is started, this is called to get the port that the server
 	 * must listen on.
 	 */
-	// TO DO: EXCEPTION HANDLING
-	public int getPort() throws Exception {
+	public int getPort() {
 		boolean portOK = false;
 		int portInt = 0;
 
@@ -96,13 +91,12 @@ public class ServerTUI implements Runnable {
 	/**
 	 * This method is called when the server wants to shut down.
 	 */
-	// TO DO: EXCEPTION HANDLING
 	public void shutDown() {
 		try {
 			isOpen = false;
 			in.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			// inputStream is already closed, do nothing..
 		}
 	}
 

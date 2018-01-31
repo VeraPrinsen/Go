@@ -1,6 +1,5 @@
 package clientcontroller;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -175,7 +174,8 @@ public class SmarterStrategyCalc implements Runnable {
 				}
 			}
 
-			if (emptyFields.size() == 0 && (board.getScore(playerToken) > board.getScore(playerToken.other()))) {
+			if (emptyFields.size() == 0 
+					&& (board.getScore(playerToken) > board.getScore(playerToken.other()))) {
 				bestMove = "pass";
 				bestStrategy = "pass";
 			} else if (emptyFields.size() != 0) {
@@ -186,7 +186,8 @@ public class SmarterStrategyCalc implements Runnable {
 					int y = emptyFields.get(index).getY();
 					try {
 						if (board.checkMove(x, y, playerToken)) {
-							bestMove = emptyFields.get(index).getX() + "_" + emptyFields.get(index).getY();
+							bestMove = emptyFields.get(index).getX() + "_" 
+									+ emptyFields.get(index).getY();
 							bestStrategy = "random / no owned group";
 							moveOK = true;
 						}
@@ -202,7 +203,8 @@ public class SmarterStrategyCalc implements Runnable {
 		// Check if the move allows the opponent to capture you next turn
 		// ===============================================================================
 		if (!foundBestMove && canCalculate) {
-			if (emptyFields.size() == 0 && (board.getScore(playerToken) > board.getScore(playerToken.other()))) {
+			if (emptyFields.size() == 0 
+					&& (board.getScore(playerToken) > board.getScore(playerToken.other()))) {
 				bestMove = "pass";
 				bestStrategy = "random / no capture";
 				foundBestMove = true;
@@ -216,8 +218,10 @@ public class SmarterStrategyCalc implements Runnable {
 					Board nextBoard = board.boardCopy();
 					nextBoard.setField(x, y, playerToken);
 					try {
-						if (board.checkMove(x, y, playerToken) && !nextBoard.canBeCaptured(playerToken)) {
-							bestMove = emptyFields.get(index).getX() + "_" + emptyFields.get(index).getY();
+						if (board.checkMove(x, y, playerToken) 
+								&& !nextBoard.canBeCaptured(playerToken)) {
+							bestMove = emptyFields.get(index).getX() + "_" 
+								+ emptyFields.get(index).getY();
 							bestStrategy = "random / not allowing opponent to capture you";
 							moveOK = true;
 						}
@@ -232,7 +236,8 @@ public class SmarterStrategyCalc implements Runnable {
 		// Check if the move allows the opponent to capture you next turn
 		// ===============================================================================
 		if (!foundBestMove && canCalculate) {
-			if (board.getScore(playerToken) > (board.getScore(playerToken.other()) + (1/10) * dim * dim)) {
+			if (board.getScore(playerToken) > (board.getScore(playerToken.other()) 
+					+ (1 / 10) * dim * dim)) {
 				bestMove = "pass";
 				bestStrategy = "pass if you have 1/10 point more than the other player";
 			}

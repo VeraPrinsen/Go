@@ -1,19 +1,23 @@
 package clientcontroller;
 
-import java.util.ArrayList;
 import java.util.List;
-
 import boardview.InvalidCoordinateException;
 import model.Board;
 import model.Field;
-import model.Group;
 import model.Token;
 
+/**
+ * The calculator of the RandomStrategy. 
+ * Selects a random move and checks if it is valid.
+ * @author vera.prinsen
+ *
+ */
 public class RandomStrategyCalc implements Runnable {
 
 	private Game game;
 	private String bestMove;
 	private String bestStrategy;
+	private boolean canCalculate;
 
 	public RandomStrategyCalc(Game game) {
 		this.game = game;
@@ -24,12 +28,13 @@ public class RandomStrategyCalc implements Runnable {
 	public void run() {
 		Token playerToken = game.getToken();
 		Board board = game.getBoard();
-		int dim = board.getDIM();
+		
+		canCalculate = true;
 		
 		if (board.fieldString().contains(Token.EMPTY.toString())) {
 			boolean moveOK = false;
 			
-			while (!moveOK) {
+			while (!moveOK && canCalculate) {
 				// Board has empty fields
 				List<Field> emptyFields = board.getEmptyFields();
 				int index = (int) Math.floor(Math.random() * emptyFields.size());
@@ -58,6 +63,10 @@ public class RandomStrategyCalc implements Runnable {
 	
 	public String getBestStrategy() {
 		return this.bestStrategy;
+	}
+	
+	public void endCalc() {
+		canCalculate = false;
 	}
 
 }

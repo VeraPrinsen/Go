@@ -34,7 +34,6 @@ public class GameServer implements Runnable {
 	/**
 	 * When a player sends a game request, add them to the lobby.
 	 */
-	// TO DO: MAKE lobby THREAD SAFE
 	public void addToLobby(ClientHandler ch) {
 		lock.lock();
 		synchronized (lobby) {
@@ -46,9 +45,8 @@ public class GameServer implements Runnable {
 	}
 	
 	/**
-	 * When a game is started with two players, remove them from the waiting queue (lobby)
+	 * When a game is started with two players, remove them from the waiting queue (lobby).
 	 */
-	// TO DO: MAKE lobby THREAD SAFE
 	public void removeFromLobby(ClientHandler ch) {
 		synchronized (lobby) {
 			server.print(ch.getName() + " removed from Lobby.");
@@ -61,10 +59,9 @@ public class GameServer implements Runnable {
 	}
 	
 	/**
-	 * The GameServer checks the size of the lobby constantly and if there are 2 or more players, make a new game for the first 2 players. (default, with extension, this could be different)
+	 * The GameServer checks the size of the lobby constantly and if there are 2 or more players, 
+	 * make a new game for the first 2 players. (default, with extension, this could be different)
 	 */
-	// TO DO: MAKE lobby THREAD SAFE
-	// TO DO: EXCEPTION HANDLING
 	public void run() {
 		while (isRunning) {
 			lock.lock();
@@ -81,8 +78,8 @@ public class GameServer implements Runnable {
 			} else {
 				try {
 					lobbyCondition.await();
-				} catch (Exception e) {
-					e.printStackTrace();
+				} catch (InterruptedException e) {
+					// If interrupted, the program is closing, do nothing..
 				}
 				
 			}

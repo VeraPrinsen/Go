@@ -15,25 +15,16 @@ import model.Token;
 public class Game {
 
 	private ServerHandler sh;
-
-	private int numberPlayers;
-	private final int dim;
 	private Player player;
-	private String opponent;
 	private Token token;
 
 	private Board board;
 	private int passes;
 	private int moves;
 
-	public Game(ServerHandler sh, int numberPlayers, int dim, Player player, 
-			String opponent, String color, GOGUI gui) {
+	public Game(ServerHandler sh, int dim, Player player, String color, GOGUI gui) {
 		this.sh = sh;
-
-		this.numberPlayers = numberPlayers;
-		this.dim = dim;
 		this.player = player;
-		this.opponent = opponent;
 
 		if (color.equals(Protocol.General.BLACK)) {
 			this.token = Token.BLACK;
@@ -64,18 +55,25 @@ public class Game {
 	}
 	
 	// PRINTERS & SENDERS =========================================================================
+	/** 
+	 * To print a message on the console of the client.
+	 */
 	public void print(String msg) {
 		sh.print(msg);
 	}
 	
+	/**
+	 * To send a message to the server.
+	 */
 	public void send(String msg) {
 		sh.send(msg);
 	}
 	
 	/**
-	 * The methods called by the players to make a move. The client itself checks if the move is valid.
-	 * If not, an error is shown on the The move is first send to
-	 * the server.
+	 * The methods called by the players to make a move. The client checks if the move is valid.
+	 * If not valid, an error is shown on the console.
+	 * Before the move is set on the board, the move is send to the server and the client will
+	 * await the server's confirmation.
 	 */
 	public void sendMove(int x, int y) {
 		boolean validMove = false;
@@ -86,13 +84,19 @@ public class Game {
 		}
 		
 		if (validMove) {
-			String message = Protocol.Client.MOVE + Protocol.General.DELIMITER1 + x + Protocol.General.DELIMITER2 + y;
+			String message = Protocol.Client.MOVE + Protocol.General.DELIMITER1 + x 
+					+ Protocol.General.DELIMITER2 + y;
 			send(message);
 		} else {
 			player.sendMove();
 		}
 	}
 
+	/**
+	 * The method called by the players to pass instead of making a move.
+	 * Before the pass is made in the game, the move is send to the server and the client will
+	 * await the server's confirmation.
+	 */
 	public void sendPass() {
 		String message = Protocol.Client.MOVE + Protocol.General.DELIMITER1 + Protocol.Client.PASS;
 		sh.send(message);

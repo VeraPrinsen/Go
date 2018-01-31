@@ -82,8 +82,7 @@ public class Board {
 				gui.setBoardSize(dim);
 			} catch (InvalidCoordinateException e) {
 				// Should not happen because it only resets the boardSize, it has nothing to do
-				// with coordinates on the board...
-				e.printStackTrace();
+				// with coordinates on the board... but the GUI gives this exception anyway.
 			}
 		}
 	}
@@ -187,6 +186,10 @@ public class Board {
 		return newfield;
 	}
 	
+	/** 
+	 * Makes a unique code for the current board and stones on it.
+	 * In the string each black stone will be defined by "B", "W" for white and "E" for empty.
+	 */
 	public String fieldString() {
 		String s = "";
 		for (Field f : board) {
@@ -230,7 +233,7 @@ public class Board {
 
 	/**
 	 * Put a token on field index i. This also resets the passes to zero and will
-	 * update the boardinformation through update().
+	 * update the board information through update().
 	 */
 	private void setField(int i, Token t) {
 		board[i].setToken(t);
@@ -241,7 +244,6 @@ public class Board {
 	 * Put a token on field (x, y). This is the method that is called from the Game
 	 * Controllers.
 	 */
-	// TO DO: EXCEPTION HANDLING
 	public void setField(int x, int y, Token t) {
 		try {
 			if (useGUI) {
@@ -249,14 +251,12 @@ public class Board {
 					gui.addStone(y, x, false);
 				} else if (t.equals(Token.WHITE)) {
 					gui.addStone(y, x, true);
-				} else {
-					// Cannot set an empty stone
 				}
 			}
 			previousBoards.add(fieldString());
 			setField(index(x, y), t);
 		} catch (InvalidCoordinateException e) {
-			e.printStackTrace();
+			// The location will have been checked already, should not occur.
 		}
 
 	}
@@ -264,14 +264,13 @@ public class Board {
 	/**
 	 * Adds the hint indicator to the board.
 	 */
-	// TO DO: EXCEPTION HANDLING
 	public void setHintField(int x, int y) {
 		try {
 			if (useGUI) {
 				gui.addHintIndicator(x, y);
 			}
 		} catch (InvalidCoordinateException e) {
-			e.printStackTrace();
+			// The location will have been checked already, should not occur.
 		}
 	}
 	
@@ -292,8 +291,10 @@ public class Board {
 		} else {
 			Board nextBoard = boardCopy();
 			nextBoard.setField(index(x, y), t);
-			if (previousBoards.contains(nextBoard.fieldString()) || this.fieldString().equals(nextBoard.fieldString())) {
-				throw new InvalidCoordinateException("Cannot make a move that will result in a boardstate that has already been there.");
+			if (previousBoards.contains(nextBoard.fieldString()) 
+					|| this.fieldString().equals(nextBoard.fieldString())) {
+				throw new InvalidCoordinateException("Cannot make a move that will result in "
+						+ "a boardstate that has already been there.");
 			}
 		}
 
@@ -336,25 +337,7 @@ public class Board {
 			}
 		}
 		return false;
-	}
-
-	// @ requires board1.length == board2.length
-	private boolean boardsEqual(Field[] board1, Field[] board2) {
-		if (board1 != null && board2 != null) {
-			for (int i = 0; i < board1.length; i++) {
-				Field f1 = board1[i];
-				Field f2 = board2[i];
-
-				if (!f1.getToken().equals(f2.getToken())) {
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		return false;
-	}
+	} 
 
 	private boolean isField(int index) {
 		return (index < (dim * dim)) && (index >= 0);

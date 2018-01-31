@@ -8,14 +8,9 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.BindException;
 import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The file that is executed to start a client.
@@ -28,12 +23,11 @@ public class Client {
 	private String clientName;
 	private ClientTUI tui;
 	
-	private ServerHandler sh;
 	private BufferedReader in;
 	private BufferedWriter out;
 	
 	public Client() {
-		this.tui = new ClientTUI(this);
+		this.tui = new ClientTUI();
 	}
 	
 	// GETTERS & SETTERS =================================================================	
@@ -41,18 +35,7 @@ public class Client {
 		return this.clientName;
 	}
 	
-	// INPUT PROCESSORS ========================================================
-	/**
-	 * In between the directed input, you can still give commands in the ClientTUI, this is processed here.
-	 */
-	public void processClientInput(String message) {
-		print(message);
-	}
-	
 	// PRINTERS & SENDERS ========================================================
-	/**
-	 * This method is used if some information should be send to the console of this particular client.
-	 */
 	public void print(String msg) {
 		tui.print(msg);
 	}
@@ -65,15 +48,14 @@ public class Client {
 		return tui.readInt(prompt);
 	}
 	
-	// START UP AND SHUT DOWN OF THE CLIENT ====================================================================
+	// START UP AND SHUT DOWN OF THE CLIENT ===========================================
 	/**
 	 * These are the first few things that must be done when starting the client.
 	 * 		Make connection to a server
 	 * 		Create in- and output from and to the server
 	 * 		Create serverHandler that processes this in- and output
 	 */
-	// TO DO: EXCEPTION HANDLING
-	public void start() throws Exception {		
+	public void start() {		
 		boolean ipOK = false;
 		InetAddress addr = null;
 		
@@ -111,7 +93,7 @@ public class Client {
 				print("Connected to server.");
 				print("");
 				portOK = true;
-			} catch (Exception e) {
+			} catch (IOException e) {
 				print("There is nothing to connect to on port " + port + ". Try another port.");
 			}
 		}
@@ -121,7 +103,11 @@ public class Client {
 		
 		if (clientName.equals(Protocol.Client.QUIT)) {
 			print("Goodbye!");
-			sock.close();
+			try {
+				sock.close();
+			} catch (IOException e) {
+				// Socket is probably already closed, do nothing..
+			}
 			return;
 		}
 		
@@ -137,29 +123,39 @@ public class Client {
 		
 		print("Welcome " + clientName + "!");
 		
-		in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-		out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
+		try {
+			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+			out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
+		} catch (IOException e) {
+			// When problem with socket, close the client
+			shutDown();
+		}
 		
-		sh = new ServerHandler(this, sock, in, out);
+		new ServerHandler(this, in, out);
 	}
 	
 	/**
 	 * This method is used when the client must be shut down.
 	 */
-	// TO DO: EXCEPTION HANDLING
-	// TO DO: IMPLEMENT
 	public void shutDown() {
-		// This is called when the whole program has to shut down (Server disconnect or QUIT in main menu)
-		// tui.shutDown() (when this is a thread)
+		try {
+			sock.close();
+			in.close();
+			out.close();
+		} catch (IOException e) {
+			// Is already closing everything:
+			// if there is a problem with closing, is is probably already closed.
+		}
+		
 		print("");
 		print("Goodbye!");
+		System.exit(0);
 	}
 	
 	/**
 	 * Starts a new client.
 	 */
-	// TO DO: EXCEPTION HANDLING
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		(new Client()).start();
 	}
 }

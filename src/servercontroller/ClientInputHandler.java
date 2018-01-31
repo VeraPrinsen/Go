@@ -3,8 +3,6 @@ package servercontroller;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-import clientcontroller.ServerInputProcessor;
-import general.Protocol;
 
 /**
  * The ClientInputHandler handles all the input that the server gets from this
@@ -32,10 +30,13 @@ public class ClientInputHandler implements Runnable {
 	public void run() {
 		String msg;
 		try {
-			while (isOpen && (msg = in.readLine()) != null) {
-				Thread newInput = new Thread(new ClientInputProcessor(ch, msg), "ClientInputProcessor");
+			msg = in.readLine();
+			while (isOpen && msg != null) {
+				Thread newInput = new Thread(new ClientInputProcessor(ch, msg), 
+						"ClientInputProcessor");
 				newInput.setDaemon(true);
 				newInput.start();
+				msg = in.readLine();
 			}
 		} catch (IOException e) {
 			
@@ -46,7 +47,6 @@ public class ClientInputHandler implements Runnable {
 		}
 	}
 
-	// WHEN IS THIS USED?????? AND SHOULD THE CALLER OF THIS REMOVE THE CLIENT FROM CLIENTLIST IN SERVER????
 	public void shutDown() {
 		isOpen = false;
 	}

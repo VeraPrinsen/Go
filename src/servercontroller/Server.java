@@ -3,7 +3,6 @@ package servercontroller;
 import general.*;
 import netview.ServerTUI;
 
-import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -14,11 +13,7 @@ import java.io.OutputStreamWriter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.io.IOException;
-import java.net.SocketException;
 
 /**
  * The file that is executed to start a server.
@@ -44,14 +39,12 @@ public class Server {
 		clients = new ArrayList<>();
 	}
 
-	// START UP AND SHUTDOWN OF THE SERVER
-	// ==============================================================================
+	// START UP AND SHUTDOWN OF THE SERVER ============================================
 	/**
 	 * This is what is done when the server is started: A valid portnumber is asked
 	 * from the Server TUI The TUI and GameServer are started in new threads Server
 	 * will wait here for clients to connect.
 	 */
-	// TO DO: EXCEPTION HANDLING
 	public void start() {
 		boolean portOK = false;
 		int port = 0;
@@ -64,10 +57,8 @@ public class Server {
 				print("Server connected. Waiting for clients to connect...");
 				print("");
 				portOK = true;
-			} catch (BindException e) {
+			} catch (IOException e) {
 				print("Port " + port + " is already in use. Try another port.");
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
 
 		}
@@ -83,15 +74,15 @@ public class Server {
 					while (true) {
 						Socket sock = ssock.accept();
 						print("A client has connected.");
-						BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-						BufferedWriter out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
+						BufferedReader in = new BufferedReader(new InputStreamReader(
+								sock.getInputStream()));
+						BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
+								sock.getOutputStream()));
 						ClientHandler ch = new ClientHandler(Server.this, sock, in, out);
 						clients.add(ch);
 					}
-				} catch (SocketException e) {
-					print("Socket Exception occured.");
-				} catch (Exception e) {
-					print("Regular Exception occured.");
+				} catch (IOException e) {
+					// ServerSocket has closed, program is closing, do nothing..
 				}
 			}
 		}, "CheckForClients");
@@ -148,8 +139,7 @@ public class Server {
 		(new Server()).start();
 	}
 
-	// GETTERS & SETTERS
-	// ================================================================
+	// GETTERS & SETTERS ================================================================
 	public String getName() {
 		return this.serverName;
 	}
@@ -162,8 +152,7 @@ public class Server {
 		return this.clients;
 	}
 
-	// INPUT PROCESSORS
-	// =============================================================================
+	// INPUT PROCESSORS ==============================================================
 	/**
 	 * This is what is done to the input that has come from the ServerTUI.
 	 */
@@ -175,8 +164,7 @@ public class Server {
 		}
 	}
 
-	// PRINTERS & SENDERS
-	// =============================================================================
+	// PRINTERS & SENDERS ==========================================================
 	/**
 	 * This method is used to print some text on the output of the server.
 	 */

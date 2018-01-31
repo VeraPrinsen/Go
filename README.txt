@@ -39,4 +39,8 @@ Follow the instructions seen in the terminal to start a client.
 
 When a client is started at any time "quit" can be typed (during
 a game) to give up the game. Furthermore "exit" can be timed
-at any time to disconnect from the server and stop the client. 
+at any time to disconnect from the server and stop the client.
+
+During the game, when the game asks you to provide a row and column
+to put your stone, you can instead also type "pass" to pass this 
+round. 

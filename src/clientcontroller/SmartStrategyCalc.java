@@ -1,6 +1,5 @@
 package clientcontroller;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -26,7 +25,6 @@ public class SmartStrategyCalc implements Runnable {
 	public void run() {
 		Token playerToken = game.getToken();
 		Board board = game.getBoard();
-		int dim = board.getDIM();
 		
 		boolean foundBestMove = false;
 		canCalculate = true;
@@ -174,9 +172,7 @@ public class SmartStrategyCalc implements Runnable {
 				int x = f.getX();
 				int y = f.getY();
 				try {
-					if (board.checkMove(x, y, playerToken)) {
-						
-					}
+					board.checkMove(x, y, playerToken);
 				} catch (InvalidCoordinateException e) {
 					iterF1.remove();
 				}

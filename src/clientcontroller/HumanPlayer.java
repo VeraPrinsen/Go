@@ -1,11 +1,12 @@
 package clientcontroller;
 
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import general.Protocol;
 
+/**
+ * HumanPlayer is a Player that asks the user of the client to provide a move.
+ * @author vera.prinsen
+ *
+ */
 public class HumanPlayer implements Player {
 
 	private ServerHandler sh;
@@ -15,9 +16,10 @@ public class HumanPlayer implements Player {
 	public HumanPlayer(ServerHandler sh) {
 		this.sh = sh;
 		game = null;
-		hintStrategy = new RandomStrategy(this, 1);
+		hintStrategy = new RandomStrategy(this, 1); // hint must be shown within 1 second
 	}
 	
+	// GETTERS & SETTERS ================================================
 	public void setGame(Game game) {
 		this.game = game;
 	}
@@ -26,6 +28,11 @@ public class HumanPlayer implements Player {
 		return this.game;
 	}
 	
+	// GAME MECHANICS ====================================================
+	/**
+	 * When it is the HumanPlayer it's turn, this method is called.
+	 * It will ask the user to make a move.
+	 */
 	public void sendMove() {
 		// First let the hint functionality show a spot to place the stone
 		String hintMove = hintStrategy.sendMove();

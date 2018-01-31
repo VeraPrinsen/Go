@@ -2,7 +2,6 @@ package clientcontroller;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.SocketException;
 
 /**
  * The ServerInputHandler handles all the input that the client gets from the server.
@@ -28,15 +27,16 @@ public class ServerInputHandler implements Runnable {
 	public void run() {
 		String msg;
 		try {
-			while (isOpen && (msg = in.readLine()) != null) {
-				Thread newInput = new Thread(new ServerInputProcessor(sh, msg), "ServerInputProcessor");
+			msg = in.readLine();
+			while (isOpen && msg != null) {
+				Thread newInput = new Thread(new ServerInputProcessor(sh, msg), 
+						"ServerInputProcessor");
 				newInput.setDaemon(true);
 				newInput.start();
+				msg = in.readLine();
 			}
-		} catch (SocketException e) {
-			// socket closed
 		} catch (IOException e) {
-			// socket closed
+			// socket closed, program is closing, do nothing..
 		}
 	
 		if (isOpen) {

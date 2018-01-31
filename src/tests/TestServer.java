@@ -2,7 +2,6 @@ package tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -60,16 +59,18 @@ public class TestServer {
 		assertEquals(Integer.parseInt(args[11]), Extensions.multimoves);
 		
 		// Same for the second client, not checking that, but clearing the input stream
-		String input2 = in2.readLine();
+		in2.readLine();
 		
 		// Before anything can be send to the server the NAME command should be send to the server
 		String message1 = Protocol.Client.NAME + Protocol.General.DELIMITER1 + name1
-		+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 + Protocol.Client.VERSIONNO
-		+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1
-		+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge + Protocol.General.DELIMITER1
-		+ Extensions.leaderboard + Protocol.General.DELIMITER1 + Extensions.security
-		+ Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1
-		+ Extensions.simultaneous + Protocol.General.DELIMITER1 + Extensions.multimoves;
+			+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 
+			+ Protocol.Client.VERSIONNO
+			+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1
+			+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge 
+			+ Protocol.General.DELIMITER1
+			+ Extensions.leaderboard + Protocol.General.DELIMITER1 + Extensions.security
+			+ Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1
+			+ Extensions.simultaneous + Protocol.General.DELIMITER1 + Extensions.multimoves;
 		out1.write(message1 + Protocol.General.COMMAND_END);
 		out1.flush();
 		
@@ -77,9 +78,12 @@ public class TestServer {
 		
 		// For both clients
 		String message2 = Protocol.Client.NAME + Protocol.General.DELIMITER1 + name2
-				+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 + Protocol.Client.VERSIONNO
-				+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1
-				+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge + Protocol.General.DELIMITER1
+				+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 
+				+ Protocol.Client.VERSIONNO
+				+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS 
+				+ Protocol.General.DELIMITER1
+				+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge 
+				+ Protocol.General.DELIMITER1
 				+ Extensions.leaderboard + Protocol.General.DELIMITER1 + Extensions.security
 				+ Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1
 				+ Extensions.simultaneous + Protocol.General.DELIMITER1 + Extensions.multimoves;
@@ -89,31 +93,37 @@ public class TestServer {
 		Thread.sleep(1000);
 		
 		// Both clients will request a (default) 2 player game.
-		out1.write(Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 + Protocol.General.COMMAND_END);
+		out1.write(Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 
+				+ Protocol.General.COMMAND_END);
 		out1.flush();
 		
 		Thread.sleep(1000);
 				
-		out2.write(Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 + Protocol.General.COMMAND_END);
+		out2.write(Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 
+				+ Protocol.General.COMMAND_END);
 		out2.flush();
 	
-		// In response the first client to request this (client1) will receive a START command which will ask for the settings of the game.
+		// In response the first client to request this (client1) will receive 
+		// a START command which will ask for the settings of the game.
 		assertEquals("START$2", in1.readLine());
 		
 		Thread.sleep(1000);
 		
 		// Client1 will send their SETTINGS to the server.
-		out1.write(Protocol.Client.SETTINGS + Protocol.General.DELIMITER1 + Protocol.General.BLACK + Protocol.General.DELIMITER1 + 19 + Protocol.General.COMMAND_END);
+		out1.write(Protocol.Client.SETTINGS + Protocol.General.DELIMITER1 + Protocol.General.BLACK 
+				+ Protocol.General.DELIMITER1 + 19 + Protocol.General.COMMAND_END);
 		out1.flush();
 		
 		Thread.sleep(1000);
 		
 		// And the clients expect another START command from the server
-		assertEquals("START$2$" + Protocol.General.BLACK + "$19$" + name1 + "$" + name2, in1.readLine());
+		assertEquals("START$2$" + Protocol.General.BLACK + "$19$" + name1 + "$" + name2, 
+				in1.readLine());
 		
 		Thread.sleep(1000);
 		
-		assertEquals("START$2$" + Protocol.General.WHITE + "$19$" + name1 + "$" + name2, in2.readLine());
+		assertEquals("START$2$" + Protocol.General.WHITE + "$19$" + name1 + "$" + name2, 
+				in2.readLine());
 		
 		Thread.sleep(1000);
 		
@@ -192,11 +202,13 @@ public class TestServer {
 		Thread.sleep(1000);
 		
 		// Both Clients will receive an ENDGAME command. Piet scored 2 points, Henk scored 1 point.
-		assertEquals("ENDGAME$FINISHED$" + name1 + "$2$" + name2 +"$1", in1.readLine());
+		assertEquals("ENDGAME$FINISHED$" + name1 + "$2$" + name2 + "$1", 
+				in1.readLine());
 
 		Thread.sleep(1000);
 
-		assertEquals("ENDGAME$FINISHED$" + name1 + "$2$" + name2 +"$1", in2.readLine());
+		assertEquals("ENDGAME$FINISHED$" + name1 + "$2$" + name2 + "$1", 
+				in2.readLine());
 		
 	}
 	
@@ -223,16 +235,18 @@ public class TestServer {
 		assertEquals(Integer.parseInt(args[11]), Extensions.multimoves);
 		
 		// Same for the second client, not checking that, but clearing the input stream
-		String input2 = in2.readLine();
+		in2.readLine();
 		
 		// Before anything can be send to the server the NAME command should be send to the server
 		String message1 = Protocol.Client.NAME + Protocol.General.DELIMITER1 + name1
-		+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 + Protocol.Client.VERSIONNO
-		+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1
-		+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge + Protocol.General.DELIMITER1
-		+ Extensions.leaderboard + Protocol.General.DELIMITER1 + Extensions.security
-		+ Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1
-		+ Extensions.simultaneous + Protocol.General.DELIMITER1 + Extensions.multimoves;
+			+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 
+			+ Protocol.Client.VERSIONNO
+			+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1
+			+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge 
+			+ Protocol.General.DELIMITER1
+			+ Extensions.leaderboard + Protocol.General.DELIMITER1 + Extensions.security
+			+ Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1
+			+ Extensions.simultaneous + Protocol.General.DELIMITER1 + Extensions.multimoves;
 		out1.write(message1 + Protocol.General.COMMAND_END);
 		out1.flush();
 		
@@ -240,9 +254,12 @@ public class TestServer {
 		
 		// For both clients
 		String message2 = Protocol.Client.NAME + Protocol.General.DELIMITER1 + name2
-				+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 + Protocol.Client.VERSIONNO
-				+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1
-				+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge + Protocol.General.DELIMITER1
+				+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 
+				+ Protocol.Client.VERSIONNO
+				+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS 
+				+ Protocol.General.DELIMITER1
+				+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge 
+				+ Protocol.General.DELIMITER1
 				+ Extensions.leaderboard + Protocol.General.DELIMITER1 + Extensions.security
 				+ Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1
 				+ Extensions.simultaneous + Protocol.General.DELIMITER1 + Extensions.multimoves;
@@ -252,31 +269,37 @@ public class TestServer {
 		Thread.sleep(1000);
 		
 		// Both clients will request a (default) 2 player game.
-		out1.write(Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 + Protocol.General.COMMAND_END);
+		out1.write(Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 
+				+ Protocol.General.COMMAND_END);
 		out1.flush();
 		
 		Thread.sleep(1000);
 				
-		out2.write(Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 + Protocol.General.COMMAND_END);
+		out2.write(Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 
+				+ Protocol.General.COMMAND_END);
 		out2.flush();
 	
-		// In response the first client to request this (client1) will receive a START command which will ask for the settings of the game.
+		// In response the first client to request this (client1) will receive 
+		// a START command which will ask for the settings of the game.
 		assertEquals("START$2", in1.readLine());
 		
 		Thread.sleep(1000);
 		
 		// Client1 will send their SETTINGS to the server.
-		out1.write(Protocol.Client.SETTINGS + Protocol.General.DELIMITER1 + Protocol.General.BLACK + Protocol.General.DELIMITER1 + 19 + Protocol.General.COMMAND_END);
+		out1.write(Protocol.Client.SETTINGS + Protocol.General.DELIMITER1 + Protocol.General.BLACK 
+				+ Protocol.General.DELIMITER1 + 19 + Protocol.General.COMMAND_END);
 		out1.flush();
 		
 		Thread.sleep(1000);
 		
 		// And the clients expect another START command from the server
-		assertEquals("START$2$" + Protocol.General.BLACK + "$19$" + name1 + "$" + name2, in1.readLine());
+		assertEquals("START$2$" + Protocol.General.BLACK + "$19$" + name1 + "$" + name2, 
+				in1.readLine());
 		
 		Thread.sleep(1000);
 		
-		assertEquals("START$2$" + Protocol.General.WHITE + "$19$" + name1 + "$" + name2, in2.readLine());
+		assertEquals("START$2$" + Protocol.General.WHITE + "$19$" + name1 + "$" + name2, 
+				in2.readLine());
 		
 		Thread.sleep(1000);
 		
@@ -300,7 +323,7 @@ public class TestServer {
 		
 		Thread.sleep(1000);
 		
-		// ====================================================================================================
+		// ===========================================================================
 		// Client2 will send a non-valid move to the server
 		out2.write("MOVE$60_6" + Protocol.General.COMMAND_END);
 		out2.flush();
@@ -309,7 +332,7 @@ public class TestServer {
 
 		// Client2 will receive an INVALIDMOVE error
 		assertTrue(in2.readLine().contains("ERROR$INVALIDMOVE$"));
-		// ====================================================================================================
+		// ===========================================================================
 		
 		Thread.sleep(1000);
 		

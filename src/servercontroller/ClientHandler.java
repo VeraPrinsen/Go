@@ -77,8 +77,7 @@ public class ClientHandler {
 		}
 	}
 
-	// GETTERS & SETTERS
-	// ========================================================================
+	// GETTERS & SETTERS =========================================================
 	public String getName() {
 		return this.clientName;
 	}
@@ -99,9 +98,7 @@ public class ClientHandler {
 		return this.playerNo;
 	}
 
-	// METHODS FOR PLAYING THE GAME
-	// ===================================================
-	// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+	// METHODS FOR PLAYING THE GAME ===================================================
 	/**
 	 * Start a game for this particular client. game is the game object that is
 	 * used. player says if the player was the first (0) or second (1) in the game.
@@ -120,12 +117,10 @@ public class ClientHandler {
 		this.game = null;
 	}
 
-	// INPUT PROCESSORS
-	// ================================================================
+	// INPUT PROCESSORS ================================================================
 	/**
 	 * This is what is done with the input from this particular client.
 	 */
-	// TO DO: CHECK FOR VALID INPUT
 	public void processClientInput(String msg) {
 		String[] args = msg.split("\\" + Protocol.General.DELIMITER1);
 
@@ -140,7 +135,8 @@ public class ClientHandler {
 					}
 	
 					if (equalNames > 1) {
-						sendError(Protocol.Server.NAMETAKEN, "This name is already used. Choose another one.");
+						sendError(Protocol.Server.NAMETAKEN, "This name is already used. "
+								+ "Choose another one.");
 						return;
 					}
 				}
@@ -155,8 +151,8 @@ public class ClientHandler {
 					clientExtensions[5] = Integer.parseInt(args[10]);
 					clientExtensions[6] = Integer.parseInt(args[11]);
 				} catch (NumberFormatException e) {
-					sendError(Protocol.Server.UNKNOWN,
-							"In the NAME command, " + "integers are expected for the versionnumber and all extensions.");
+					sendError(Protocol.Server.UNKNOWN, "In the NAME command, integers are expected "
+							+ "for the versionnumber and all extensions.");
 					shutDown();
 					server.removeFromClients(this);
 					return;
@@ -164,8 +160,9 @@ public class ClientHandler {
 	
 				if (clientVersionNo != Protocol.Server.VERSIONNO) {
 					sendError(Protocol.Server.INCOMPATIBLEPROTOCOL,
-							"The server runs protocol version " + Protocol.Server.VERSIONNO
-									+ ". This is not compatible with your version no. " + clientVersionNo + ".");
+							"The server runs protocol version " + Protocol.Server.VERSIONNO 
+							+ ". This is not compatible with your version no. " + clientVersionNo 
+							+ ".");
 					shutDown();
 					return;
 				}
@@ -179,7 +176,8 @@ public class ClientHandler {
 					server.getGameServer().addToLobby(this);
 					inLobby = true;
 				} else {
-					sendError(Protocol.Server.OTHER, "First a NAME command is expected before you can play a game.");
+					sendError(Protocol.Server.OTHER, "First a NAME command is expected "
+							+ "before you can play a game.");
 				}
 				break;
 	
@@ -194,7 +192,8 @@ public class ClientHandler {
 					// game.startGame();
 					inLobby = false;
 				} else {
-					sendError(Protocol.Server.ERROR, "Cannot send SETINGS if you have not requested a game yet.");
+					sendError(Protocol.Server.ERROR, "Cannot send SETINGS if you "
+							+ "have not requested a game yet.");
 				}
 				break;
 	
@@ -227,7 +226,8 @@ public class ClientHandler {
 							}
 						} catch (NumberFormatException e) {
 							game.setCurrentPlayer(playerNo);
-							sendError(Protocol.Server.INVALID, "Invalid coordinates, they should be integers.");
+							sendError(Protocol.Server.INVALID, "Invalid coordinates, "
+									+ "they should be integers.");
 						}
 					}
 				} else {
@@ -308,13 +308,13 @@ public class ClientHandler {
 	 */
 	public void sendVersion() {
 		String message = Protocol.Server.NAME + Protocol.General.DELIMITER1 + server.getName()
-				+ Protocol.General.DELIMITER1 + Protocol.Server.VERSION + Protocol.General.DELIMITER1
-				+ Protocol.Server.VERSIONNO + Protocol.General.DELIMITER1 + Protocol.Server.EXTENSIONS
-				+ Protocol.General.DELIMITER1 + Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge
-				+ Protocol.General.DELIMITER1 + Extensions.leaderboard + Protocol.General.DELIMITER1
-				+ Extensions.security + Protocol.General.DELIMITER1 + Extensions.multiplayer
-				+ Protocol.General.DELIMITER1 + Extensions.simultaneous + Protocol.General.DELIMITER1
-				+ Extensions.multimoves;
+			+ Protocol.General.DELIMITER1 + Protocol.Server.VERSION + Protocol.General.DELIMITER1
+			+ Protocol.Server.VERSIONNO + Protocol.General.DELIMITER1 + Protocol.Server.EXTENSIONS
+			+ Protocol.General.DELIMITER1 + Extensions.chat + Protocol.General.DELIMITER1 
+			+ Extensions.challenge + Protocol.General.DELIMITER1 + Extensions.leaderboard 
+			+ Protocol.General.DELIMITER1 + Extensions.security + Protocol.General.DELIMITER1 
+			+ Extensions.multiplayer + Protocol.General.DELIMITER1 + Extensions.simultaneous 
+			+ Protocol.General.DELIMITER1 + Extensions.multimoves;
 		send(message);
 	}
 
@@ -329,7 +329,8 @@ public class ClientHandler {
 	 * 		OTHER
 	 */
 	public void sendError(String error, String errorMessage) {
-		String message = Protocol.Server.ERROR + Protocol.General.DELIMITER1 + error + Protocol.General.DELIMITER1 + errorMessage;
+		String message = Protocol.Server.ERROR + Protocol.General.DELIMITER1 + error 
+				+ Protocol.General.DELIMITER1 + errorMessage;
 		send(message);
 	}
 
@@ -345,12 +346,15 @@ public class ClientHandler {
 
 	/**
 	 * Method that constructs and sends the START command to both players. 
-	 * format: START <int numberPlayers> <String colorPlayer> <int boardSize> <String firstPlayer> <String secondPlayer>
+	 * format: START <int numberPlayers> <String colorPlayer> <int boardSize> 
+	 * 										<String firstPlayer> <String secondPlayer>
 	 */
-	public void sendStart(int numberPlayers, String color, int DIM, String currentPlayer, String otherPlayer) {
+	public void sendStart(int numberPlayers, String color, int dim, 
+			String currentPlayer, String otherPlayer) {
 		String message = Protocol.Server.START + Protocol.General.DELIMITER1 + numberPlayers
-				+ Protocol.General.DELIMITER1 + color + Protocol.General.DELIMITER1 + DIM + Protocol.General.DELIMITER1
-				+ currentPlayer + Protocol.General.DELIMITER1 + otherPlayer;
+			+ Protocol.General.DELIMITER1 + color + Protocol.General.DELIMITER1 + dim 
+			+ Protocol.General.DELIMITER1 + currentPlayer + Protocol.General.DELIMITER1 
+			+ otherPlayer;
 		send(message);
 	}
 
@@ -359,9 +363,9 @@ public class ClientHandler {
 	 * format: TURN <String firstPlayer> FIRST <String firstPlayer>
 	 */
 	public void sendFirst() {
-
-		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1
-				+ Protocol.Server.FIRST + Protocol.General.DELIMITER1 + clientName;
+		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName 
+				+ Protocol.General.DELIMITER1 + Protocol.Server.FIRST 
+				+ Protocol.General.DELIMITER1 + clientName;
 		send(message);
 	}
 
@@ -372,8 +376,8 @@ public class ClientHandler {
 	 */
 	public void sendMove(int x, int y) {
 		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + opponent.getName()
-				+ Protocol.General.DELIMITER1 + x + Protocol.General.DELIMITER2 + y + Protocol.General.DELIMITER1
-				+ clientName;
+			+ Protocol.General.DELIMITER1 + x + Protocol.General.DELIMITER2 + y 
+			+ Protocol.General.DELIMITER1 + clientName;
 		send(message);
 	}
 
@@ -383,8 +387,9 @@ public class ClientHandler {
 	 * / previousPlayer> x_y <String opponent / nextPlayer>
 	 */
 	public void sendValidMove(int x, int y) {
-		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1
-				+ x + Protocol.General.DELIMITER2 + y + Protocol.General.DELIMITER1 + opponent.getName();
+		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName 
+				+ Protocol.General.DELIMITER1 + x + Protocol.General.DELIMITER2 + y 
+				+ Protocol.General.DELIMITER1 + opponent.getName();
 		send(message);
 	}
 
@@ -395,7 +400,8 @@ public class ClientHandler {
 	 */
 	public void sendPass() {
 		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + opponent.getName()
-				+ Protocol.General.DELIMITER1 + Protocol.Server.PASS + Protocol.General.DELIMITER1 + clientName;
+				+ Protocol.General.DELIMITER1 + Protocol.Server.PASS 
+				+ Protocol.General.DELIMITER1 + clientName;
 		send(message);
 	}
 
@@ -405,7 +411,8 @@ public class ClientHandler {
 	 * opponent / nextPlayer>
 	 */
 	public void sendValidPass() {
-		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName + Protocol.General.DELIMITER1
+		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 
+				+ clientName + Protocol.General.DELIMITER1
 				+ Protocol.Server.PASS + Protocol.General.DELIMITER1 + opponent.getName();
 		send(message);
 	}
@@ -413,7 +420,8 @@ public class ClientHandler {
 	/**
 	 * Method that constructs and sends the command that the game has ended, why it
 	 * has ended and the end scores. 
-	 * format: ENDGAME <String reason> <String winningPlayer> <int score> <String losingPlayer> <int score> 
+	 * format: ENDGAME <String reason> <String winningPlayer> <int score> 
+	 * 							<String losingPlayer> <int score> 
 	 * reason can be: 
 	 * 		FINISHED (game has finished because both players passed after each other)
 	 * 		ABORTED (someone (server or client) has left the game and therefore the game stopped) 
@@ -463,12 +471,16 @@ public class ClientHandler {
 		// ENDGAME reden WINSPELER score VERLIESSPELER score
 		String message;
 		if (scorePlayer > scoreOpponent) {
-			message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason + Protocol.General.DELIMITER1
-					+ clientName + Protocol.General.DELIMITER1 + scorePlayer + Protocol.General.DELIMITER1
+			message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason 
+					+ Protocol.General.DELIMITER1
+					+ clientName + Protocol.General.DELIMITER1 + scorePlayer 
+					+ Protocol.General.DELIMITER1
 					+ opponent.getName() + Protocol.General.DELIMITER1 + scoreOpponent;
 		} else {
-			message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason + Protocol.General.DELIMITER1
-					+ opponent.getName() + Protocol.General.DELIMITER1 + scoreOpponent + Protocol.General.DELIMITER1
+			message = Protocol.Server.ENDGAME + Protocol.General.DELIMITER1 + reason 
+					+ Protocol.General.DELIMITER1
+					+ opponent.getName() + Protocol.General.DELIMITER1 + scoreOpponent 
+					+ Protocol.General.DELIMITER1
 					+ clientName + Protocol.General.DELIMITER1 + scorePlayer;
 		}
 

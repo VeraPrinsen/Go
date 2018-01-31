@@ -4,7 +4,6 @@ import general.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.net.Socket;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -21,7 +20,6 @@ import boardview.GoGUIIntegrator;
 public class ServerHandler {
 
 	public Client client;
-	private Socket sock;
 	private BufferedReader in;
 	private BufferedWriter out;
 
@@ -36,9 +34,8 @@ public class ServerHandler {
 	Lock lock = new ReentrantLock();
 	Condition condition = lock.newCondition();
 
-	public ServerHandler(Client client, Socket sock, BufferedReader in, BufferedWriter out) {
+	public ServerHandler(Client client, BufferedReader in, BufferedWriter out) {
 		this.client = client;
-		this.sock = sock;
 		this.in = in;
 		this.out = out;
 
@@ -68,18 +65,7 @@ public class ServerHandler {
 
 	public void shutDown() {
 		serverInput.shutDown();
-
-		try {
-			sock.close();
-			in.close();
-			out.close();
-		} catch (IOException e) {
-			print("IOException occured.");
-		}
-
 		client.shutDown();
-		System.exit(0);
-
 	}
 
 	// GETTERS & SETTERS
@@ -125,16 +111,9 @@ public class ServerHandler {
 				if (args.length == 2) {
 					sendSettings();
 				} else if (args.length == 6) {
-					int numberPlayers = Integer.parseInt(args[1]);
 					String color = args[2];
 					int boardSize = Integer.parseInt(args[3]);
-					String opponent;
-					if (color.equals(Protocol.General.BLACK)) {
-						opponent = args[5];
-					} else {
-						opponent = args[4];
-					}
-					game = new Game(this, numberPlayers, boardSize, player, opponent, color, gui);
+					game = new Game(this, boardSize, player, color, gui);
 					player.setGame(game);
 					condition.signal();
 				}
@@ -149,8 +128,7 @@ public class ServerHandler {
 					try {
 						condition.await();
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						// Will be interrupted if program is closing, do nothing..
 					}
 				}
 				lock.unlock();
@@ -163,7 +141,7 @@ public class ServerHandler {
 						game.setPass();
 						print("You have passed.");
 					} else {
-						// Server informes us that our opponent has passed.
+						// Server informed us that our opponent has passed.
 						game.setPass();
 						print("Opponent has passed.");
 	
@@ -180,7 +158,7 @@ public class ServerHandler {
 						// Server has informed us our move was valid.
 						game.setMovePlayer(x, y, true);
 					} else {
-						// Server informes us that our opponent has played the following valid move:
+						// Server informed us that our opponent has played the following valid move:
 						game.setMovePlayer(x, y, false);
 	
 						if (game != null && !game.gameOver()) {
@@ -214,14 +192,16 @@ public class ServerHandler {
 					// Game was finished
 					if (playerScore > opponentScore) {
 						print("");
-						print("Congratulations! You won from " + opponentName + " with " + playerScore + " against "
-								+ opponentScore + ".");
+						print("Congratulations! You won from " + opponentName + " with " 
+								+ playerScore + " against " + opponentScore + ".");
 					} else if (opponentScore > playerScore) {
 						print("");
-						print("You lost from " + opponentName + " with " + playerScore + " against " + opponentScore + ".");
+						print("You lost from " + opponentName + " with " + playerScore 
+								+ " against " + opponentScore + ".");
 					} else {
 						print("");
-						print("It was a draw. You and " + opponentName + " both scored " + playerScore + " points.");
+						print("It was a draw. You and " + opponentName + " both scored " 
+								+ playerScore + " points.");
 					}
 				} else if (args[1].equals(Protocol.Server.ABORTED)) {
 					print("");
@@ -307,13 +287,12 @@ public class ServerHandler {
 	/**
 	 * The method called when information must be send to the server.
 	 */
-	// TO DO: EXCEPTION HANDLING
 	public void send(String msg) {
 		try {
 			out.write(msg + Protocol.General.COMMAND_END);
 			out.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			// if outputStream is closed, do nothing, program is already closing..
 		}
 	}
 
@@ -323,9 +302,10 @@ public class ServerHandler {
 	 */
 	public void sendVersion() {
 		String message = Protocol.Client.NAME + Protocol.General.DELIMITER1 + client.getName()
-				+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1 + Protocol.Client.VERSIONNO
-				+ Protocol.General.DELIMITER1 + Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1
-				+ Extensions.chat + Protocol.General.DELIMITER1 + Extensions.challenge + Protocol.General.DELIMITER1
+				+ Protocol.General.DELIMITER1 + "VERSION" + Protocol.General.DELIMITER1
+				+ Protocol.Client.VERSIONNO + Protocol.General.DELIMITER1
+				+ Protocol.Client.EXTENSIONS + Protocol.General.DELIMITER1 + Extensions.chat
+				+ Protocol.General.DELIMITER1 + Extensions.challenge + Protocol.General.DELIMITER1
 				+ Extensions.leaderboard + Protocol.General.DELIMITER1 + Extensions.security
 				+ Protocol.General.DELIMITER1 + Extensions.multiplayer + Protocol.General.DELIMITER1
 				+ Extensions.simultaneous + Protocol.General.DELIMITER1 + Extensions.multimoves;
@@ -357,6 +337,10 @@ public class ServerHandler {
 		}
 	}
 
+	/**
+	 * When a game is requested, this asks for a human or computer player.
+	 * Also it sends the REQUEST command to the server.
+	 */
 	public void sendRequest() {
 		print("");
 		print("Do you want to play yourself or do you want the computer play for you?");
@@ -389,7 +373,7 @@ public class ServerHandler {
 					shutDown();
 					return;
 				} else {
-					player = new ComputerPlayer(this, reactionTimeAI);
+					player = new ComputerPlayer(reactionTimeAI);
 					optionOK = true;
 				}
 
@@ -399,8 +383,8 @@ public class ServerHandler {
 		}
 		setPlayer(player);
 
-		String message = Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 + Protocol.General.DELIMITER1
-				+ Protocol.Client.RANDOM;
+		String message = Protocol.Client.REQUESTGAME + Protocol.General.DELIMITER1 + 2 
+				+ Protocol.General.DELIMITER1 + Protocol.Client.RANDOM;
 		send(message);
 		print("Game requested. Wait for other players to connect...");
 	}
@@ -411,7 +395,7 @@ public class ServerHandler {
 
 		boolean optionOK = false;
 		while (!optionOK) {
-			int seconds = readInt("Within how many seconds should the computer " + "have determined a move?");
+			int seconds = readInt("Within how many seconds should the computer determine a move?");
 			if (seconds == -1) {
 				// QUIT
 				reactionTime = -1;
@@ -435,7 +419,8 @@ public class ServerHandler {
 		boolean colorOK = false;
 		String colorString = "";
 		while (!colorOK) {
-			int colorInt = client.readInt("What color do you want to play with? " + "(1 - BLACK, 2 - WHITE)");
+			int colorInt = client.readInt("What color do you want to play with? " 
+					+ "(1 - BLACK, 2 - WHITE)");
 			colorString = "";
 			if (colorInt == -1) {
 				// QUIT
@@ -463,8 +448,8 @@ public class ServerHandler {
 		while (!boardsizeOK) {
 			int minBoardsize = 5;
 			int maxBoardsize = 19;
-			boardSize = client.readInt("What do you want to be the size of the board? " + "(Integer between "
-					+ minBoardsize + " - " + maxBoardsize + ")");
+			boardSize = client.readInt("What do you want to be the size of the board? " 
+					+ "(Integer between " + minBoardsize + " - " + maxBoardsize + ")");
 			if (boardSize == -1) {
 				// QUIT
 				sendQuit();
@@ -476,7 +461,8 @@ public class ServerHandler {
 				shutDown();
 				return;
 			} else if ((boardSize < minBoardsize) || (boardSize > maxBoardsize)) {
-				print("This is not a valid input. Enter an integer between " + minBoardsize + " and " + maxBoardsize
+				print("This is not a valid input. Enter an integer between " + minBoardsize 
+						+ " and " + maxBoardsize
 						+ ".");
 			} else {
 				boardsizeOK = true;

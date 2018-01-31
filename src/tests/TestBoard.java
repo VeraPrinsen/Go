@@ -10,33 +10,32 @@ import boardview.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 
 public class TestBoard {
 
 	private GOGUI gui;
 	private Board board;
-	private int DIM;
+	private int dim;
 	
 	@Before
 	public void setUp() {
-		DIM = 9;
-		gui = new GoGUIIntegrator(false, false, DIM);
+		dim = 9;
+		gui = new GoGUIIntegrator(false, false, dim);
 	}
 
 	@Test
 	public void initTest() {
 		boolean useGUI = false;
 		if (useGUI) {
-			board = new Board(DIM, gui);
+			board = new Board(dim, gui);
 		} else {
-			board = new Board(DIM);
+			board = new Board(dim);
 		}
 		
-		assertEquals(board.getDIM(), DIM);
+		assertEquals(board.getDIM(), dim);
 		
-		for (int i = 0; i < DIM; i++) {
-			for (int j = 0; j < DIM; j++) {
+		for (int i = 0; i < dim; i++) {
+			for (int j = 0; j < dim; j++) {
 				assertEquals(board.getField(i, j), Token.EMPTY);
 			}
 		}
@@ -55,9 +54,9 @@ public class TestBoard {
 	public void testSettersRandom() {
 		boolean useGUI = true;
 		if (useGUI) {
-			board = new Board(DIM, gui);
+			board = new Board(dim, gui);
 		} else {
-			board = new Board(DIM);
+			board = new Board(dim);
 		}
 		
 		board.setField(0, 1, Token.BLACK);
@@ -115,9 +114,9 @@ public class TestBoard {
 	public void testSettersGroup() {
 		boolean useGUI = false;
 		if (useGUI) {
-			board = new Board(DIM, gui);
+			board = new Board(dim, gui);
 		} else {
-			board = new Board(DIM);
+			board = new Board(dim);
 		}
 		
 		board.setField(0, 0, Token.BLACK);
@@ -164,9 +163,9 @@ public class TestBoard {
 	public void testGroupCapture() {
 		boolean useGUI = false;
 		if (useGUI) {
-			board = new Board(DIM, gui);
+			board = new Board(dim, gui);
 		} else {
-			board = new Board(DIM);
+			board = new Board(dim);
 		}
 		
 		board.setField(0, 0, Token.BLACK);

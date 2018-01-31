@@ -14,6 +14,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Sphere;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -47,8 +49,8 @@ public class GOGUIImpl extends Application {
     private final PhongMaterial whiteMaterial = new PhongMaterial();
     private final PhongMaterial yellowMaterial = new PhongMaterial();
 
-    private static final CountDownLatch waitForConfigurationLatch = new CountDownLatch(1);
-    private static final CountDownLatch initializationLatch = new CountDownLatch(1);
+    private static final CountDownLatch WAITFORCONFIGURATIONLATCH = new CountDownLatch(1);
+    private static final CountDownLatch INITIALIZATIONLATCH = new CountDownLatch(1);
 
     private static GOGUIImpl instance;
 
@@ -65,7 +67,7 @@ public class GOGUIImpl extends Application {
     }
 
     protected void countDownConfigurationLatch() {
-        waitForConfigurationLatch.countDown();
+        WAITFORCONFIGURATIONLATCH.countDown();
     }
 
     protected void setShowStartupAnimation(boolean showStartupAnimation) {
@@ -77,28 +79,26 @@ public class GOGUIImpl extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage primarystage) {
         instance = this;
         initDrawMaterials();
 
         try {
-            waitForConfigurationLatch.await();
-        }
-        catch (InterruptedException e) {
+            WAITFORCONFIGURATIONLATCH.await();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        this.primaryStage = primaryStage;
+        this.primaryStage = primarystage;
 
-        primaryStage.setTitle("GO");
+        primarystage.setTitle("GO");
 
         initNewBoard();
 
         if (showStartupAnimation) {
             runStartupAnimation();
-        }
-        else {
-            initializationLatch.countDown();
+        } else {
+            INITIALIZATIONLATCH.countDown();
         }
     }
 
@@ -121,7 +121,7 @@ public class GOGUIImpl extends Application {
             public void handle(long currentNanoTime) {
                 double t = (currentNanoTime - startNanoTime) / 50000000.0;
 
-                int x = ((int) (t % currentBoardWidth));
+                int x = (int) (t % currentBoardWidth);
 
                 if (x < lastX) {
                     roundCount++;
@@ -131,16 +131,14 @@ public class GOGUIImpl extends Application {
                     if (roundCount >= 2) {
                         stop();
                         clearBoard();
-                        initializationLatch.countDown();
-                    }
-                    else {
+                        INITIALIZATIONLATCH.countDown();
+                    } else {
                         clearBoard();
                         if (x % 2 != 0) {
                             drawDiagonalStoneLine(x - 1, false, roundCount != 0);
                             drawDiagonalStoneLine(x, true, roundCount != 0);
                             drawDiagonalStoneLine(x + 1, false, roundCount != 0);
-                        }
-                        else {
+                        } else {
                             drawDiagonalStoneLine(x - 1, true, roundCount != 0);
                             drawDiagonalStoneLine(x, false, roundCount != 0);
                             drawDiagonalStoneLine(x + 1, true, roundCount != 0);
@@ -158,7 +156,8 @@ public class GOGUIImpl extends Application {
         root = new Group();
         board = new Node[currentBoardWidth][currentBoardHeight];
 
-        Scene scene = new Scene(root, (currentBoardWidth + 1) * currentSquareSize, (currentBoardHeight + 1) * currentSquareSize);
+        Scene scene = new Scene(root, (currentBoardWidth + 1) * currentSquareSize, 
+        		(currentBoardHeight + 1) * currentSquareSize);
         primaryStage.setScene(scene);
         primaryStage.show();
 
@@ -182,22 +181,32 @@ public class GOGUIImpl extends Application {
 
         // Draw horizontal lines
         for (int i = 1; i <= height; i++) {
-            boardLines.add(new Line(squareSize, i * squareSize, width * squareSize, i * squareSize));
+            boardLines.add(new Line(squareSize, i * squareSize, 
+            		width * squareSize, i * squareSize));
             // Line(startX, startY, endX, endY)
             // Text(x, y, text)
-            boardText.add(new Text(0.5 * squareSize, (i * squareSize) + 5, Integer.toString((i-1))));
+            Text newText = new Text(0.15 * squareSize, (i * squareSize) + 5, 
+            		Integer.toString(i - 1));
+            newText.setFont(Font.font("Verdana", FontWeight.BOLD, 20.0));
+            newText.setFill(Color.WHITE);
+            boardText.add(newText);
         }
 
         // Draw vertical lines
         for (int i = 1; i <= width; i++) {
-            boardLines.add(new Line(i * squareSize, squareSize, i * squareSize, height * squareSize));
-            boardText.add(new Text((i * squareSize) - 5, 0.5 * squareSize, Integer.toString((i-1))));
+            boardLines.add(new Line(i * squareSize, squareSize, 
+            		i * squareSize, height * squareSize));
+            Text newText = new Text((i * squareSize) - 5, 0.4 * squareSize, 
+            		Integer.toString(i - 1));
+            newText.setFont(Font.font("Verdana", FontWeight.BOLD, 20.0));
+            newText.setFill(Color.WHITE);
+            boardText.add(newText);
         }
 
         root.getChildren().addAll(boardLines);
         root.getChildren().addAll(boardText);
         
-        if (mode3D){
+        if (mode3D) {
             hint = new Sphere(currentSquareSize / 2);
             ((Sphere) hint).setMaterial(yellowMaterial);
         } else {
@@ -215,15 +224,13 @@ public class GOGUIImpl extends Application {
                     if (x + y == diagonal * 2) {
                         if (!flip) {
                             addStone(x, y, stoneType);
-                        }
-                        else {
+                        } else {
                             addStone(currentBoardWidth - 1 - x, y, stoneType);
                         }
                     }
                 }
             }
-        }
-        catch (InvalidCoordinateException e) {
+        } catch (InvalidCoordinateException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -232,29 +239,27 @@ public class GOGUIImpl extends Application {
         checkCoordinates(x, y);
         removeStone(x, y);
 
-        if (mode3D){
+        if (mode3D) {
             Sphere newStone = new Sphere(currentSquareSize / 2);
 
             if (white) {
                 newStone.setMaterial(whiteMaterial);
-            }
-            else {
+            } else {
                 newStone.setMaterial(blackMaterial);
             }
 
-            newStone.setTranslateX(((x + 1) * currentSquareSize));
-            newStone.setTranslateY(((y + 1) * currentSquareSize));
+            newStone.setTranslateX((x + 1) * currentSquareSize);
+            newStone.setTranslateY((y + 1) * currentSquareSize);
             board[x][y] = newStone;
 
             root.getChildren().add(newStone);
-        }
-        else {
-            Circle newStone = new Circle(((x + 1) * currentSquareSize), ((y + 1) * currentSquareSize), currentSquareSize / 2);
+        } else {
+            Circle newStone = new Circle((x + 1) * currentSquareSize, 
+            		(y + 1) * currentSquareSize, currentSquareSize / 2);
 
             if (white) {
                 newStone.setFill(Color.WHITE);
-            }
-            else {
+            } else {
                 newStone.setFill(Color.BLACK);
             }
 
@@ -276,11 +281,12 @@ public class GOGUIImpl extends Application {
         checkCoordinates(x, y);
         removeStone(x, y);
 
-        if (mode3D){
-            Box areaStone = new Box(currentSquareSize / 3, currentSquareSize / 3, currentSquareSize / 3);
+        if (mode3D) {
+            Box areaStone = new Box(currentSquareSize / 3, currentSquareSize / 3, 
+            		currentSquareSize / 3);
             areaStone.setMaterial(white ? whiteMaterial : blackMaterial);
-            areaStone.setTranslateX(((x + 1) * currentSquareSize));
-            areaStone.setTranslateY(((y + 1) * currentSquareSize));
+            areaStone.setTranslateX((x + 1) * currentSquareSize);
+            areaStone.setTranslateY((y + 1) * currentSquareSize);
             board[x][y] = areaStone;
             root.getChildren().add(areaStone);
         } else {
@@ -297,8 +303,8 @@ public class GOGUIImpl extends Application {
     }
 
     protected void addHintIndicator(int x, int y) throws InvalidCoordinateException {
-        hint.setTranslateX(((x + 1) * currentSquareSize));
-        hint.setTranslateY(((y + 1) * currentSquareSize));
+        hint.setTranslateX((x + 1) * currentSquareSize);
+        hint.setTranslateY((y + 1) * currentSquareSize);
         hint.setVisible(true);
     }
 
@@ -308,11 +314,13 @@ public class GOGUIImpl extends Application {
 
     private void checkCoordinates(int x, int y) throws InvalidCoordinateException {
         if (x < 0 || x >= currentBoardWidth) {
-            throw new InvalidCoordinateException("x coordinate is outside of board range. x coordinate: " + x + " board range: 0-" + (currentBoardWidth - 1));
+            throw new InvalidCoordinateException("x coordinate is outside of board range. "
+            		+ "x coordinate: " + x + " board range: 0-" + (currentBoardWidth - 1));
         }
 
         if (y < 0 || y >= currentBoardHeight) {
-            throw new InvalidCoordinateException("y coordinate is outside of board range. y coordinate: " + y + " board range: 0-" + (currentBoardHeight - 1));
+            throw new InvalidCoordinateException("y coordinate is outside of board range. "
+            		+ "y coordinate: " + y + " board range: 0-" + (currentBoardHeight - 1));
         }
     }
 
@@ -323,8 +331,7 @@ public class GOGUIImpl extends Application {
                     removeStone(x, y);
                 }
             }
-        }
-        catch (InvalidCoordinateException e) {
+        } catch (InvalidCoordinateException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -352,11 +359,10 @@ public class GOGUIImpl extends Application {
     protected void waitForInitializationLatch() {
         try {
             System.out.println("Attempting init of the GOGUI!");
-            if (!initializationLatch.await(30, TimeUnit.SECONDS)) {
+            if (!INITIALIZATIONLATCH.await(30, TimeUnit.SECONDS)) {
                 System.out.println("Initialization of the GOGUI failed!");
             }
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }

@@ -17,8 +17,9 @@ public class Field {
 		this.neighbors = new HashSet<>();
 	}
 	
-	public void setToken(Token t) {
-		this.t = t;
+	// GETTERS & SETTERS ==================================
+	public void setToken(Token token) {
+		this.t = token;
 	}
 	
 	public Token getToken() {
