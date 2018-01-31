@@ -18,12 +18,14 @@ public class TimeoutTimer implements Runnable {
 	public void run() {
 		while (System.currentTimeMillis() < endTime && gameRunning) {
 			try {
-				Thread.sleep(100L);
+				Thread.sleep(50L);
 			} catch (InterruptedException e) {
 				
 			}
 		}
+		
 		if (gameRunning) {
+			System.out.println("Game is over!");
 			game.timeout();
 		}
 	}
