@@ -237,7 +237,7 @@ public class SmarterStrategyCalc implements Runnable {
 		// ===============================================================================
 		if (!foundBestMove && canCalculate) {
 			if (board.getScore(playerToken) > (board.getScore(playerToken.other()) 
-					+ (1 / 10) * dim * dim)) {
+					+ (1 / 5) * dim * dim)) {
 				bestMove = "pass";
 				bestStrategy = "pass if you have 1/10 point more than the other player";
 			}

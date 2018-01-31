@@ -52,7 +52,7 @@ public class TestBoard {
 	
 	@Test
 	public void testSettersRandom() {
-		boolean useGUI = true;
+		boolean useGUI = false;
 		if (useGUI) {
 			board = new Board(dim, gui);
 		} else {

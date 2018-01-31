@@ -20,7 +20,7 @@ public class GameController {
 	private int currentPlayer = -1;
 	private Board board;
 	private int passes;
-	private int moves;
+	private int[] moves;
 	
 	public GameController(GameServer gameServer, ClientHandler ch1, ClientHandler ch2) {
 		this.gameServer = gameServer;
@@ -28,6 +28,7 @@ public class GameController {
 		this.players = new ClientHandler[numberPlayers];
 		this.playerColor = new String[numberPlayers];
 		this.playerToken = new Token[numberPlayers];
+		this.moves = new int[numberPlayers];
 		this.players[0] = ch1;
 		this.players[1] = ch2;
 	}
@@ -81,7 +82,21 @@ public class GameController {
 	public void setBoard(int dim) {
 		board = new Board(dim);
 		passes = 0;
-		moves = dim * dim;
+		
+		int totalFields = dim * dim;
+		boolean isEven = (totalFields % 2) == 0;
+		if (isEven) {
+			moves[0] = (int) (0.5 * totalFields);
+			moves[1] = (int) (0.5 * totalFields);
+		} else {
+			if (playerToken[0].equals(Token.BLACK)) {
+				moves[0] = (int) (0.5 * totalFields) + 1;
+				moves[1] = (int) (0.5 * totalFields);
+			} else {
+				moves[1] = (int) (0.5 * totalFields) + 1;
+				moves[0] = (int) (0.5 * totalFields);
+			}
+		}
 	}
 	
 	/**
@@ -133,7 +148,7 @@ public class GameController {
 		}
 	
 		if (validMove) {
-			moves--;
+			moves[playerNo]--;
 			passes = 0;
 			board.setField(x, y, playerToken[playerNo]);
 			sendMove(x, y, playerNo);
@@ -144,7 +159,7 @@ public class GameController {
 	 * After a player passes, this is called to check if the game has finished.
 	 */
 	public boolean gameOver() {
-		return (passes > 1) || (moves <= 0);
+		return (passes > 1) || (moves[0] <= 0) || (moves[1] <= 0);
 	}
 	
 	/**

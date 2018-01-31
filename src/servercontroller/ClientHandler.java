@@ -186,8 +186,8 @@ public class ClientHandler {
 					String colorString = args[1];
 					int boardSize = Integer.parseInt(args[2]);
 	
-					game.setBoard(boardSize);
 					game.setColors(this, colorString);
+					game.setBoard(boardSize);
 					game.sendStart();
 					inLobby = false;
 				} else {

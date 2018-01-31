@@ -20,7 +20,8 @@ public class Game {
 
 	private Board board;
 	private int passes;
-	private int moves;
+	private int playerMoves;
+	private int opponentMoves;
 
 	public Game(ServerHandler sh, int dim, Player player, String color, GOGUI gui) {
 		this.sh = sh;
@@ -34,7 +35,21 @@ public class Game {
 
 		this.board = new Board(dim, gui);
 		this.passes = 0;
-		this.moves = dim * dim;
+		
+		int totalFields = dim * dim;
+		boolean isEven = (totalFields % 2) == 0;
+		if (isEven) {
+			this.playerMoves = (int) (0.5 * totalFields);
+			this.opponentMoves = (int) (0.5 * totalFields);
+		} else {
+			if (token.equals(Token.BLACK)) {
+				this.playerMoves = (int) (0.5 * totalFields) + 1;
+				this.opponentMoves = (int) (0.5 * totalFields);
+			} else {
+				this.opponentMoves = (int) (0.5 * totalFields) + 1;
+				this.playerMoves = (int) (0.5 * totalFields);
+			}
+		}
 	}
 
 	// GETTERS & SETTERS ===========================================================================
@@ -48,10 +63,6 @@ public class Game {
 	
 	public int getPasses() {
 		return this.passes;
-	}
-	
-	public int getMoves() {
-		return this.moves;
 	}
 	
 	// PRINTERS & SENDERS =========================================================================
@@ -107,10 +118,11 @@ public class Game {
 	 * the move is valid, it is made in the model through these methods.
 	 */
 	public void setMovePlayer(int x, int y, boolean isPlayer) {
-		moves--;
 		if (isPlayer) {
+			playerMoves--;
 			setMove(x, y, token);
 		} else {
+			opponentMoves--;
 			setMove(x, y, token.other());
 		}
 	}
@@ -126,7 +138,7 @@ public class Game {
 
 	// CHECKS ==================================================================================
 	public boolean gameOver() {
-		return (passes > 1) || (moves <= 0);
+		return (passes > 1) || (playerMoves <= 0) || (opponentMoves <= 0);
 	}
 
 }

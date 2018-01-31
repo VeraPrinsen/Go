@@ -10,7 +10,6 @@ import boardview.*;
  * @author vera.prinsen
  *
  */
-// TO DO: EXCEPTION HANDLING
 public class Board {
 
 	private final int dim;
