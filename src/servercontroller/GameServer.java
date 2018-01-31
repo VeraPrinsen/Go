@@ -74,6 +74,8 @@ public class GameServer implements Runnable {
 					GameController newgame = new GameController(this, player1, player2);
 					games.add(newgame);
 					newgame.setup();
+					server.print("A game has started between " + player1.getName() + " and " 
+							+ player2.getName() + ".");
 				}
 			} else {
 				try {
@@ -85,7 +87,6 @@ public class GameServer implements Runnable {
 			}
 			lock.unlock();
 		}
-		server.print("GameServer closed.");
 	}
 	
 	public void shutDown() {

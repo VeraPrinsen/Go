@@ -23,10 +23,6 @@ public class TestBoardMain {
         gogui.addStone(3, 6, false);
         
         gogui.addStone(3, 5, true);
-        
-        
-      
-
-        
+       
     }
 }

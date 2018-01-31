@@ -26,7 +26,6 @@ public class ClientInputHandler implements Runnable {
 	/**
 	 * This checks the input stream from the client to the server constantly.
 	 */
-	// TO DO: EXCEPTION HANDLING
 	public void run() {
 		String msg;
 		try {
@@ -39,9 +38,10 @@ public class ClientInputHandler implements Runnable {
 				msg = in.readLine();
 			}
 		} catch (IOException e) {
-			
+			// inputStream is probably closed, do nothing here..
 		}
 		
+		// If inputStream is closed, but server is still running, disconnect the client.
 		if (isOpen) {
 			ch.shutDown();
 		}

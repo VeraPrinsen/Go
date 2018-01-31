@@ -73,7 +73,7 @@ public class ClientHandler {
 			in.close();
 			out.close();
 		} catch (IOException e) {
-			print("IOException occured.");
+			// Streams are already closed, but do nothing, program is already closing..
 		}
 	}
 
@@ -189,7 +189,6 @@ public class ClientHandler {
 					game.setBoard(boardSize);
 					game.setColors(this, colorString);
 					game.sendStart();
-					// game.startGame();
 					inLobby = false;
 				} else {
 					sendError(Protocol.Server.ERROR, "Cannot send SETINGS if you "
@@ -291,13 +290,12 @@ public class ClientHandler {
 	/**
 	 * To send a message to this specific client.
 	 */
-	// TO DO: EXCEPTION HANDLING
 	public void send(String msg) {
 		try {
 			out.write(msg + Protocol.General.COMMAND_END);
 			out.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			// outputStream is closed, program is closing, do nothing..
 		}
 
 	}
