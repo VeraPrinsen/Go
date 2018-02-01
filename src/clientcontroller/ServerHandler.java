@@ -89,6 +89,7 @@ public class ServerHandler {
 	 * processed here.
 	 */
 	public void processServerInput(String msg) {
+		// print(msg);
 		String[] args = msg.split("\\" + Protocol.General.DELIMITER1);
 
 		switch (args[0]) {
@@ -112,6 +113,9 @@ public class ServerHandler {
 					sendSettings();
 				} else if (args.length == 6) {
 					String color = args[2];
+					if (player == null) {
+						player = new ComputerPlayer(2);
+					}
 					int boardSize = Integer.parseInt(args[3]);
 					game = new Game(this, boardSize, player, color, gui);
 					player.setGame(game);
@@ -134,7 +138,9 @@ public class ServerHandler {
 				lock.unlock();
 	
 				if (args[2].equals(Protocol.Server.FIRST)) {
-					player.sendMove();
+					if (args[1].equals(client.getName())) {
+						player.sendMove();
+					}
 				} else if (args[2].equals(Protocol.Server.PASS)) {
 					if (args[1].equals(client.getName())) {
 						// Server has informed us our pass was valid.
@@ -147,6 +153,8 @@ public class ServerHandler {
 	
 						if (!game.gameOver()) {
 							player.sendMove();
+						} else {
+							game.sendPass();
 						}
 					}
 				} else {
@@ -163,6 +171,14 @@ public class ServerHandler {
 	
 						if (game != null && !game.gameOver()) {
 							player.sendMove();
+						} else {
+							try {
+								// if server doesn't end game using limit of moves
+								game.sendPass();
+							} catch (NullPointerException e) {
+								// if it does use that method, the game won't 
+								// exist anymore, do nothing..
+							}
 						}
 					}
 				}
@@ -236,6 +252,7 @@ public class ServerHandler {
 					case Protocol.Server.INVALID:
 						print("");
 						print("Message from server: " + args[2]);
+						player.sendMove();
 						break;
 		
 					case Protocol.Server.NAMETAKEN:

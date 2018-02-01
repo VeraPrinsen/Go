@@ -177,6 +177,10 @@ public class GameController {
 		timeoutTimer.resetTimer();
 	}
 	
+	public void stopTimer() {
+		timeoutTimer.stopGame();
+	}
+	
 	// MISCELLANEOUS METHODS ========================================================
 	/**
 	 * Return the color that if the opposite of the one that was entered.
@@ -200,7 +204,8 @@ public class GameController {
 		players[1].sendStart(numberPlayers, playerColor[1], board.getDIM(), 
 				players[currentPlayer].getName(), players[Math.abs(currentPlayer - 1)].getName());
 		
-		players[currentPlayer].sendFirst();
+		players[0].sendFirst(currentPlayer);
+		players[1].sendFirst(currentPlayer);
 		new Thread(timeoutTimer, "TimeoutTimer").start();
 	}
 	

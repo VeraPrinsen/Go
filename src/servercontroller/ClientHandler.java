@@ -36,7 +36,8 @@ public class ClientHandler {
 	private boolean hasName = false;
 	private boolean inLobby = false;
 
-	private Lock moveLock = new ReentrantLock();
+	//private Lock moveLock = new ReentrantLock();
+	private Lock enterLock = new ReentrantLock();
 
 	public ClientHandler(Server server, Socket sock, BufferedReader in, BufferedWriter out) {
 		this.server = server;
@@ -67,7 +68,6 @@ public class ClientHandler {
 	}
 
 	public void shutDown() {
-		server.removeFromClients(this);
 		try {
 			sock.close();
 			in.close();
@@ -75,6 +75,7 @@ public class ClientHandler {
 		} catch (IOException e) {
 			// Streams are already closed, but do nothing, program is already closing..
 		}
+		server.removeFromClients(this);
 	}
 
 	// GETTERS & SETTERS =========================================================
@@ -122,10 +123,12 @@ public class ClientHandler {
 	 * This is what is done with the input from this particular client.
 	 */
 	public void processClientInput(String msg) {
+		// print(clientName + ": " + msg);
 		String[] args = msg.split("\\" + Protocol.General.DELIMITER1);
 
 		switch (args[0]) {
 			case Protocol.Client.NAME:
+				enterLock.lock();
 				clientName = args[1];
 	
 				int equalNames = 0;
@@ -169,9 +172,11 @@ public class ClientHandler {
 	
 				print("[" + clientName + " has entered]");
 				hasName = true;
+				enterLock.unlock();
 				break;
 	
 			case Protocol.Client.REQUESTGAME:
+				enterLock.lock();
 				if (hasName) {
 					server.getGameServer().addToLobby(this);
 					inLobby = true;
@@ -179,9 +184,11 @@ public class ClientHandler {
 					sendError(Protocol.Server.OTHER, "First a NAME command is expected "
 							+ "before you can play a game.");
 				}
+				enterLock.unlock();
 				break;
 	
 			case Protocol.Client.SETTINGS:
+				enterLock.lock();
 				if (inLobby) {
 					String colorString = args[1];
 					int boardSize = Integer.parseInt(args[2]);
@@ -194,10 +201,12 @@ public class ClientHandler {
 					sendError(Protocol.Server.ERROR, "Cannot send SETINGS if you "
 							+ "have not requested a game yet.");
 				}
+				enterLock.unlock();
 				break;
 	
 			case Protocol.Client.MOVE:
-				moveLock.lock(); // to prevent a player to send multiple moves to cheat the game..
+				enterLock.lock();
+				//moveLock.lock(); // to prevent a player to send multiple moves to cheat the game..
 	
 				if (!((game == null) || (game.getCurrentPlayer() != playerNo))) {
 					game.setCurrentPlayer(Math.abs(playerNo - 1));
@@ -231,7 +240,8 @@ public class ClientHandler {
 					}
 				} else {
 					if (game == null) {
-						sendError(Protocol.Server.INVALID, "A game has not started yet.");
+						//sendError(Protocol.Server.INVALID, "A game has not started yet.");
+						System.out.println("");
 					} else if (game.getCurrentPlayer() != playerNo) {
 						sendError(Protocol.Server.INVALID, "It is not your turn.");
 					} else {
@@ -239,8 +249,8 @@ public class ClientHandler {
 					}
 				}
 	
-				moveLock.unlock();
-	
+				//moveLock.unlock();
+				enterLock.unlock();
 				break;
 	
 			case Protocol.Client.QUIT:
@@ -252,6 +262,7 @@ public class ClientHandler {
 					// Client is in game, but it has not yet started
 					// Opponent does not know this, so he doesn't need to be informed.
 					// But he needs to be added to the lobby again.
+					game.stopTimer();
 					opponent.endGame();
 					this.endGame();
 					server.getGameServer().addToLobby(opponent);
@@ -360,10 +371,17 @@ public class ClientHandler {
 	 * Method that constructs and sends the TURN FIRST command to the first player.
 	 * format: TURN <String firstPlayer> FIRST <String firstPlayer>
 	 */
-	public void sendFirst() {
-		String message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName 
-				+ Protocol.General.DELIMITER1 + Protocol.Server.FIRST 
-				+ Protocol.General.DELIMITER1 + clientName;
+	public void sendFirst(int playerNumber) {
+		String message;
+		if (playerNumber == playerNo) {
+			message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + clientName 
+					+ Protocol.General.DELIMITER1 + Protocol.Server.FIRST 
+					+ Protocol.General.DELIMITER1 + clientName;
+		} else {
+			message = Protocol.Server.TURN + Protocol.General.DELIMITER1 + opponent.getName()
+					+ Protocol.General.DELIMITER1 + Protocol.Server.FIRST 
+					+ Protocol.General.DELIMITER1 + opponent.getName();
+		}
 		send(message);
 	}
 

@@ -12,10 +12,10 @@ public class TimeoutTimer implements Runnable {
 	public TimeoutTimer(GameController game) {
 		this.game = game;
 		gameRunning = true;
-		resetTimer();
 	}
 	
 	public void run() {
+		resetTimer();
 		while (System.currentTimeMillis() < endTime && gameRunning) {
 			try {
 				Thread.sleep(50L);
